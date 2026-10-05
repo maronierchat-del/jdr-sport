@@ -149,10 +149,10 @@
           </div>
           <label>Distance dans le jeu (km)<input id="travelDistance" type="number" min="0" step="0.1" value="10" inputmode="decimal" /></label>
           <div class="travel-calc" id="travelCalculation">
-            <div><span>Effort IRL</span><strong id="travelEffortDistance">5 km</strong></div>
-            <div><span>Temps à faire</span><strong id="travelCalculatedTime">25 min</strong></div>
+            <div><span>Effort IRL</span><strong id="travelEffortDistance">10 km</strong></div>
+            <div><span>Temps à faire</span><strong id="travelCalculatedTime">50 min</strong></div>
           </div>
-          <p class="helper travel-rule">Bonus Éclaireur : effort IRL ÷ 2. Conversion : 1 km d’effort IRL = 5 min. Les rencontres restent calculées sur la distance complète du trajet.</p>
+          <p class="helper travel-rule">Conversion : 1 km = 5 min d’effort IRL. Le bonus Éclaireur n’est pas appliqué automatiquement : si tu l’utilises ce jour-là, ajuste toi-même la distance avant de la saisir.</p>
           <label class="check-line travel-check"><input id="travelSolo" type="checkbox" checked /> <span>Trajet solo : nombre d’ennemis ÷ 2, arrondi au supérieur</span></label>
           <button class="btn primary full" type="button" id="saveTravelBtn">Enregistrer ce trajet</button>
           <div id="lastTravel" class="last-travel"></div>
@@ -234,8 +234,8 @@
       <section class="view" id="view-more">
         <div class="page-heading"><div><div class="eyebrow">Carnet de campagne</div><h1>Plus</h1></div></div>
         <div class="chapter-grid">
-          <button class="chapter-card" data-go="access"><span>🔑</span><strong>Accès</strong><small>Clés, passages, autorisations</small></button>
-          <button class="chapter-card" data-go="zones"><span>🗺️</span><strong>Zones</strong><small>Validées ou non</small></button>
+          <button class="chapter-card" data-go="access"><span>🔑</span><strong>Accès</strong><small>Accès restreints uniquement</small></button>
+          <button class="chapter-card" data-go="zones"><span>🗺️</span><strong>Zones</strong><small>Toutes les zones à valider</small></button>
           <button class="chapter-card" data-go="scenario"><span>📜</span><strong>Scénario</strong><small>Ce qui a été découvert</small></button>
           <button class="chapter-card" data-go="merchant"><span>🏕️</span><strong>Marchand</strong><small>Acheter et créer des articles</small></button>
           <button class="chapter-card" data-go="companions"><span>🧑‍🤝‍🧑</span><strong>Compagnons</strong><small>Alliés de route</small></button>
@@ -248,17 +248,14 @@
         <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Progression</div><h1>Accès</h1></div></div>
         <div id="accessList" class="access-groups"></div>
         <div class="paper-card access-add">
-          <div class="form-grid two">
-            <label>Nouvel accès<input id="accessName" placeholder="Nom" /></label>
-            <label>Type<select id="accessType"><option value="free">Libre</option><option value="restricted">Restreint</option></select></label>
-          </div>
+          <label>Nouvel accès restreint<input id="accessName" placeholder="Nom" /></label>
           <button class="btn primary" id="addAccessBtn">Ajouter</button>
         </div>
       </section>
 
       <section class="view" id="view-zones">
         <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Exploration</div><h1>Zones</h1></div></div>
-        <div class="paper-card"><div id="zonesList" class="check-list"></div></div>
+        <div class="paper-card"><p class="helper" style="margin-bottom:8px">Toutes les zones du jeu sont ici. Les zones restreintes restent verrouillées tant que leur accès n’est pas obtenu.</p><div id="zonesList" class="check-list"></div></div>
         <div class="paper-card inline-add"><input id="zoneName" placeholder="Nouvelle zone" /><button class="btn primary" id="addZoneBtn">Ajouter</button></div>
       </section>
 

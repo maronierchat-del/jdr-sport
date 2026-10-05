@@ -1,7 +1,7 @@
 'use strict';
 
 const STORAGE_KEY = 'fitland-jdr-save-v2';
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 
 const FREE_ACCESS_NAMES = [
   'Fontaria','Entrepôts Shaker+','Tique-Couenne','Nosferathon','Omega Beach','Garde Froide',
@@ -42,13 +42,10 @@ function makeDefaultState(){
       { id: uid(), name: 'Gants basiques', effect: 'Utilisation : punches.', qty: 1, consumable: false, damagePer30: 30, rateDamage: 10, rateSeconds: 10 },
       { id: uid(), name: 'Rame de guerre', effect: 'Résistance 1 : 150 dégâts par 30 s.', qty: 1, consumable: false, damagePer30: 150, rateDamage: 150, rateSeconds: 30, resistance: 1 }
     ],
-    accesses: [
-      ...FREE_ACCESS_NAMES.map((name) => ({ id: uid(), name, checked: true, group: 'free', builtIn: true })),
-      ...RESTRICTED_ACCESS_NAMES.map((name) => ({ id: uid(), name, checked: false, group: 'restricted', builtIn: true }))
-    ],
+    accesses: RESTRICTED_ACCESS_NAMES.map((name) => ({ id: uid(), name, checked: false, group: 'restricted', builtIn: true })),
     zones: [
-      { id: uid(), name: 'Sud du Fitland', validated: true },
-      { id: uid(), name: 'Plaine du Fitland', validated: true }
+      ...FREE_ACCESS_NAMES.map((name) => ({ id: uid(), name, validated: ['Sud du Fitland','Plaine du Fitland'].includes(name), requiresAccess: false, builtIn: true })),
+      ...RESTRICTED_ACCESS_NAMES.map((name) => ({ id: uid(), name, validated: false, requiresAccess: true, accessName: name, builtIn: true }))
     ],
     scenario: CANON_SCENARIO.map((entry) => ({ id: uid(), ...entry, at: new Date().toISOString(), builtIn: true })),
     merchant: [
@@ -77,14 +74,37 @@ function normalizeCanonicalData(current){
     rame.rateDamage = rame.damagePer30; rame.rateSeconds = 30;
     rame.effect = `Résistance ${rame.resistance} : ${rame.damagePer30} dégâts par 30 s.`;
   }
-  const canonicalAccesses = [
-    ...FREE_ACCESS_NAMES.map((name) => ({ name, checked:true, group:'free' })),
-    ...RESTRICTED_ACCESS_NAMES.map((name) => ({ name, checked:false, group:'restricted' }))
+  // La page Accès ne contient que les accès restreints.
+  current.accesses = (Array.isArray(current.accesses) ? current.accesses : [])
+    .filter((item) => !FREE_ACCESS_NAMES.includes(item.name))
+    .map((item) => ({ ...item, group:'restricted' }));
+  RESTRICTED_ACCESS_NAMES.forEach((name) => {
+    const existing = current.accesses.find((item) => item.name === name);
+    if (existing) { existing.group = 'restricted'; existing.builtIn = true; if (typeof existing.checked !== 'boolean') existing.checked = false; }
+    else current.accesses.push({ id:uid(), name, checked:false, group:'restricted', builtIn:true });
+  });
+
+  // Toutes les zones (libres + restreintes) vivent dans Zones.
+  const canonicalZones = [
+    ...FREE_ACCESS_NAMES.map((name) => ({ name, requiresAccess:false })),
+    ...RESTRICTED_ACCESS_NAMES.map((name) => ({ name, requiresAccess:true, accessName:name }))
   ];
-  canonicalAccesses.forEach((canon) => {
-    const existing = current.accesses.find((item) => item.name === canon.name);
-    if (existing) { existing.group = canon.group; existing.builtIn = true; if (typeof existing.checked !== 'boolean') existing.checked = canon.checked; }
-    else current.accesses.push({ id:uid(), ...canon, builtIn:true });
+  canonicalZones.forEach((canon) => {
+    const existing = current.zones.find((zone) => zone.name === canon.name);
+    if (existing) {
+      existing.requiresAccess = canon.requiresAccess;
+      existing.accessName = canon.accessName || null;
+      existing.builtIn = true;
+      if (typeof existing.validated !== 'boolean') existing.validated = false;
+    } else {
+      current.zones.push({ id:uid(), name:canon.name, validated:false, requiresAccess:canon.requiresAccess, accessName:canon.accessName || null, builtIn:true });
+    }
+  });
+  // Une zone restreinte ne peut jamais rester validée sans son accès.
+  current.zones.forEach((zone) => {
+    if (!zone.requiresAccess) return;
+    const access = current.accesses.find((item) => item.name === (zone.accessName || zone.name));
+    if (!access?.checked) zone.validated = false;
   });
   CANON_SCENARIO.forEach((canon) => {
     const existing = current.scenario.find((entry) => entry.title === canon.title);
@@ -242,10 +262,9 @@ function activeEnemy(){ return state.combat.enemies.find((enemy) => !enemy.defea
 
 function travelMath(){
   const gameDistance = Math.max(0, Number($('travelDistance')?.value) || 0);
-  const isScout = /éclaireur/i.test(state.character.className || '');
-  const effortDistance = isScout ? gameDistance / 2 : gameDistance;
+  const effortDistance = gameDistance;
   const duration = effortDistance * 5;
-  return { gameDistance, effortDistance, duration, isScout };
+  return { gameDistance, effortDistance, duration };
 }
 
 function fmtNumber(value){ return Number.isInteger(value) ? String(value) : Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2}); }
@@ -401,24 +420,26 @@ function renderCombatConsumables(){
 function renderAccess(){
   const list = $('accessList');
   const collator = new Intl.Collator('fr', { sensitivity:'base' });
-  const renderGroup = (title, helper, group) => {
-    const items = state.accesses.filter((item) => (item.group || 'restricted') === group).sort((a,b) => collator.compare(a.name,b.name));
-    return `<section class="paper-card access-group"><div class="card-heading"><div><div class="section-kicker">${esc(title)}</div><p class="helper">${esc(helper)}</p></div><strong class="access-count">${items.filter((i)=>i.checked).length}/${items.length}</strong></div><div class="check-list">${items.map((item) => `
-      <div class="check-item">
-        <label><input type="checkbox" data-action="toggle-access" data-id="${item.id}" ${item.checked ? 'checked' : ''}/><span>${esc(item.name)}</span></label>
-        ${item.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-access" data-id="${item.id}" aria-label="Supprimer">✕</button>`}
-      </div>`).join('')}</div></section>`;
-  };
-  list.innerHTML = renderGroup('Accès libres','Disponibles dès le départ.','free') + renderGroup('Accès restreints','À obtenir au cours de l’aventure.','restricted');
+  const items = [...state.accesses].sort((a,b) => collator.compare(a.name,b.name));
+  list.innerHTML = `<section class="paper-card access-group"><div class="card-heading"><div><div class="section-kicker">Accès restreints</div><p class="helper">Obtiens ici les clés, passages et autorisations nécessaires pour certaines zones.</p></div><strong class="access-count">${items.filter((i)=>i.checked).length}/${items.length}</strong></div><div class="check-list">${items.map((item) => `
+    <div class="check-item">
+      <label><input type="checkbox" data-action="toggle-access" data-id="${item.id}" ${item.checked ? 'checked' : ''}/><span>${esc(item.name)}</span></label>
+      ${item.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-access" data-id="${item.id}" aria-label="Supprimer">✕</button>`}
+    </div>`).join('')}</div></section>`;
 }
 
 function renderZones(){
   const list = $('zonesList');
-  list.innerHTML = state.zones.length ? state.zones.map((zone) => `
-    <div class="check-item">
-      <label><input type="checkbox" data-action="toggle-zone" data-id="${zone.id}" ${zone.validated ? 'checked' : ''}/><span>${esc(zone.name)}</span></label>
-      <button class="icon-delete" type="button" data-action="delete-zone" data-id="${zone.id}" aria-label="Supprimer">✕</button>
-    </div>`).join('') : '<div class="empty-state">Aucune zone ajoutée.</div>';
+  const collator = new Intl.Collator('fr', { sensitivity:'base' });
+  const zones = [...state.zones].sort((a,b) => collator.compare(a.name,b.name));
+  list.innerHTML = zones.length ? zones.map((zone) => {
+    const access = zone.requiresAccess ? state.accesses.find((item) => item.name === (zone.accessName || zone.name)) : null;
+    const unlocked = !zone.requiresAccess || !!access?.checked;
+    return `<div class="check-item zone-item ${unlocked ? '' : 'locked'}">
+      <label><input type="checkbox" data-action="toggle-zone" data-id="${zone.id}" ${zone.validated ? 'checked' : ''} ${unlocked ? '' : 'disabled'}/><span>${esc(zone.name)}</span>${zone.requiresAccess ? `<span class="zone-lock ${unlocked ? 'unlocked' : ''}">${unlocked ? '🔓 accès obtenu' : '🔒 accès requis'}</span>` : ''}</label>
+      ${zone.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-zone" data-id="${zone.id}" aria-label="Supprimer">✕</button>`}
+    </div>`;
+  }).join('') : '<div class="empty-state">Aucune zone ajoutée.</div>';
 }
 
 function renderScenario(){
@@ -612,10 +633,9 @@ function dealDamage(damage){
 function addAccess(){
   const name = $('accessName').value.trim();
   if (!name) return;
-  const group = $('accessType').value === 'free' ? 'free' : 'restricted';
-  state.accesses.push({ id: uid(), name, checked: group === 'free', group, builtIn:false });
+  state.accesses.push({ id: uid(), name, checked:false, group:'restricted', builtIn:false });
   $('accessName').value = '';
-  persist('Accès ajouté');
+  persist('Accès restreint ajouté');
 }
 
 function addZone(){
@@ -774,12 +794,23 @@ function handleDelegatedChange(event){
     const item = state.accesses.find((entry) => entry.id === input.dataset.id);
     if (!item) return;
     item.checked = input.checked;
+    if (!item.checked) {
+      const linkedZone = state.zones.find((zone) => zone.requiresAccess && (zone.accessName || zone.name) === item.name);
+      if (linkedZone?.validated) linkedZone.validated = false;
+    }
     logEvent(`${item.name} : accès ${item.checked ? 'obtenu' : 'retiré'}.`);
-    persist();
+    persist(item.checked ? 'Accès obtenu' : 'Accès retiré');
   }
   if (input.dataset.action === 'toggle-zone') {
     const zone = state.zones.find((entry) => entry.id === input.dataset.id);
     if (!zone) return;
+    if (zone.requiresAccess) {
+      const access = state.accesses.find((item) => item.name === (zone.accessName || zone.name));
+      if (!access?.checked) {
+        input.checked = false;
+        return toast(`Accès requis : ${zone.accessName || zone.name}`);
+      }
+    }
     zone.validated = input.checked;
     logEvent(`${zone.name} ${zone.validated ? 'validée ✅' : 'marquée non validée'}.`);
     persist(zone.validated ? 'Zone validée !' : 'Zone mise à jour');
