@@ -106,14 +106,14 @@
       </section>
 
       <section class="view" id="view-equipment">
-        <div class="page-heading">
+        <div class="page-heading equipment-heading">
           <div><div class="eyebrow">Inventaire</div><h1>Équipement</h1></div>
-          <div class="coin-pouch"><span>PO</span><strong id="poAmount">495</strong></div>
+          <div class="coin-pouch compact"><span>PO</span><strong id="poAmount">495</strong></div>
         </div>
 
-        <div class="paper-card wallet-card">
-          <div><div class="section-kicker">Bourse</div><h2><span id="poAmountLarge">495</span> pièces d’or</h2></div>
-          <button class="btn ghost" type="button" id="adjustPoBtn">Ajuster</button>
+        <div class="paper-card wallet-card compact-wallet">
+          <div><div class="section-kicker">Bourse</div><div class="wallet-line"><strong id="poAmountLarge">495</strong> poids d’or</div></div>
+          <button class="btn ghost small" type="button" id="adjustPoBtn">Ajuster</button>
         </div>
 
         <div id="equipmentList" class="inventory-list"></div>
@@ -147,10 +147,12 @@
             <label>Départ<input id="travelFrom" placeholder="Sud du Fitland" /></label>
             <label>Destination<input id="travelTo" placeholder="Plaine du Fitland" /></label>
           </div>
-          <div class="form-grid two">
-            <label>Durée IRL (min)<input id="travelDuration" type="number" min="0" value="25" inputmode="numeric" /></label>
-            <label>Moyen de déplacement<input id="travelMode" placeholder="Trottinette" /></label>
+          <label>Distance dans le jeu (km)<input id="travelDistance" type="number" min="0" step="0.1" value="10" inputmode="decimal" /></label>
+          <div class="travel-calc" id="travelCalculation">
+            <div><span>Effort IRL</span><strong id="travelEffortDistance">5 km</strong></div>
+            <div><span>Temps à faire</span><strong id="travelCalculatedTime">25 min</strong></div>
           </div>
+          <p class="helper travel-rule">Bonus Éclaireur : effort IRL ÷ 2. Conversion : 1 km d’effort IRL = 5 min. Les rencontres restent calculées sur la distance complète du trajet.</p>
           <label class="check-line travel-check"><input id="travelSolo" type="checkbox" checked /> <span>Trajet solo : nombre d’ennemis ÷ 2, arrondi au supérieur</span></label>
           <button class="btn primary full" type="button" id="saveTravelBtn">Enregistrer ce trajet</button>
           <div id="lastTravel" class="last-travel"></div>
@@ -201,7 +203,7 @@
         <div class="paper-card attack-card">
           <div class="card-heading"><div><div class="section-kicker">Action</div><h2>Infliger des dégâts</h2></div></div>
           <div class="stack">
-            <label>Cible<select id="damageTarget"></select></label>
+            <div class="current-target" id="currentTargetLabel">Aucun ennemi actif</div>
             <label>Équipement<select id="damageWeapon"></select></label>
             <div class="form-grid two">
               <label>Temps d’effort (s)<input id="effortSeconds" type="number" min="0" value="30" inputmode="numeric" /></label>
@@ -244,8 +246,14 @@
 
       <section class="view" id="view-access">
         <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Progression</div><h1>Accès</h1></div></div>
-        <div class="paper-card"><div id="accessList" class="check-list"></div></div>
-        <div class="paper-card inline-add"><input id="accessName" placeholder="Nouvel accès" /><button class="btn primary" id="addAccessBtn">Ajouter</button></div>
+        <div id="accessList" class="access-groups"></div>
+        <div class="paper-card access-add">
+          <div class="form-grid two">
+            <label>Nouvel accès<input id="accessName" placeholder="Nom" /></label>
+            <label>Type<select id="accessType"><option value="free">Libre</option><option value="restricted">Restreint</option></select></label>
+          </div>
+          <button class="btn primary" id="addAccessBtn">Ajouter</button>
+        </div>
       </section>
 
       <section class="view" id="view-zones">

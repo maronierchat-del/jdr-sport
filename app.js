@@ -1,7 +1,24 @@
 'use strict';
 
 const STORAGE_KEY = 'fitland-jdr-save-v2';
-const APP_VERSION = 2;
+const APP_VERSION = 3;
+
+const FREE_ACCESS_NAMES = [
+  'Fontaria','Entrepôts Shaker+','Tique-Couenne','Nosferathon','Omega Beach','Garde Froide',
+  'Litière Ville','Mont Stepper','Tombe d’Arno','Temple de Tasmina','Plaine du Fitland','Sud du Fitland',
+  'Forêt de Brise Mollets','Dévers du Fitland','Dunes des sacs crevés','Erythropoïéta','Oasis Interdite','Rocher de la Croupe Draconique',
+  'Khôlkozia','Feï Tôro Chob','Rives de la Mer de Nuages','L’Audience du Roi','L’Arène','Le Marché libre'
+].sort((a,b) => a.localeCompare(b, 'fr'));
+const RESTRICTED_ACCESS_NAMES = [
+  'Île des poids guidés','Antre de Mollefesse','Falaises Olympiques','Temple de la prophétie','Caverne des nuages sans fin','Exploration du Temple de Tasmina',
+  'Ruines du Golem','Salle secrète de l’Oasis','La Communauté des Abdos','L’Audience du Khôl','Les Ombres de Nosferathon','Au-delà de la fin'
+].sort((a,b) => a.localeCompare(b, 'fr'));
+const SCENARIO_PITCH = 'Arno a disparu. Le Traître et ses légions ont envahi le Temple de Tasmina. L’équilibre du Disque-Fonte est menacé.';
+const CANON_SCENARIO = [
+  { title:'Prologue — Sud du Fitland', text:'Eleanore, éclaireuse débutante au service de Gylmi, surveille la lisière de la Forêt de Brise Mollets. Une intrusion de Zomfits frappe le Sud du Fitland. Eleanore repousse l’attaque : 9 Zomfits vaincus. Le Sud du Fitland est validé. Elle doit ensuite rejoindre la Plaine du Fitland.' },
+  { title:'Plaine du Fitland', text:'Pendant le repli vers la Plaine du Fitland, Eleanore rencontre un collègue éclaireur. La Plaine est ensuite défendue contre une attaque : 6 Orcfits vaincus. La zone est validée.' },
+  { title:'Mission actuelle — Dévers du Fitland', text:'Le collègue éclaireur confie à Eleanore une mission de repérage du Dévers du Fitland, une zone périphérique du Temple de Tasmina tombé. Le Dévers est une destination de mission, pas un accès débloqué.' }
+];
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
@@ -22,16 +39,21 @@ function makeDefaultState(){
     },
     po: 495,
     equipment: [
-      { id: uid(), name: 'Gants basiques', effect: 'Équipement de base.', qty: 1, consumable: false, damagePer30: 0 },
-      { id: uid(), name: 'Rame de guerre', effect: 'Résistance 1 : 150 dégâts par 30 s.', qty: 1, consumable: false, damagePer30: 150 }
+      { id: uid(), name: 'Gants basiques', effect: 'Utilisation : punches.', qty: 1, consumable: false, damagePer30: 30, rateDamage: 10, rateSeconds: 10 },
+      { id: uid(), name: 'Rame de guerre', effect: 'Résistance 1 : 150 dégâts par 30 s.', qty: 1, consumable: false, damagePer30: 150, rateDamage: 150, rateSeconds: 30, resistance: 1 }
     ],
-    accesses: [],
+    accesses: [
+      ...FREE_ACCESS_NAMES.map((name) => ({ id: uid(), name, checked: true, group: 'free', builtIn: true })),
+      ...RESTRICTED_ACCESS_NAMES.map((name) => ({ id: uid(), name, checked: false, group: 'restricted', builtIn: true }))
+    ],
     zones: [
       { id: uid(), name: 'Sud du Fitland', validated: true },
       { id: uid(), name: 'Plaine du Fitland', validated: true }
     ],
-    scenario: [],
-    merchant: [],
+    scenario: CANON_SCENARIO.map((entry) => ({ id: uid(), ...entry, at: new Date().toISOString(), builtIn: true })),
+    merchant: [
+      { id: uid(), name:'Lest de Rame de guerre', effect:'Améliore la Rame de guerre : +1 résistance et +25 dégâts / 30 s. 7 lests disponibles au total. Résistance 8 = 325 dégâts / 30 s.', price:25, stock:7, consumable:false, damagePer30:0, kind:'rame-lest', builtIn:true }
+    ],
     companions: [
       { id: uid(), name: 'Gabrielle', notes: 'Compagnon d’Eleanore.' }
     ],
@@ -45,10 +67,40 @@ function makeDefaultState(){
   };
 }
 
+function normalizeCanonicalData(current){
+  const gants = current.equipment.find((item) => item.name === 'Gants basiques');
+  if (gants) { gants.damagePer30 = 30; gants.rateDamage = 10; gants.rateSeconds = 10; if (!gants.effect || gants.effect === 'Équipement de base.') gants.effect = 'Utilisation : punches.'; }
+  const rame = current.equipment.find((item) => item.name === 'Rame de guerre');
+  if (rame) {
+    rame.resistance = Math.max(1, Number(rame.resistance) || 1);
+    rame.damagePer30 = Math.max(150, Number(rame.damagePer30) || 150);
+    rame.rateDamage = rame.damagePer30; rame.rateSeconds = 30;
+    rame.effect = `Résistance ${rame.resistance} : ${rame.damagePer30} dégâts par 30 s.`;
+  }
+  const canonicalAccesses = [
+    ...FREE_ACCESS_NAMES.map((name) => ({ name, checked:true, group:'free' })),
+    ...RESTRICTED_ACCESS_NAMES.map((name) => ({ name, checked:false, group:'restricted' }))
+  ];
+  canonicalAccesses.forEach((canon) => {
+    const existing = current.accesses.find((item) => item.name === canon.name);
+    if (existing) { existing.group = canon.group; existing.builtIn = true; if (typeof existing.checked !== 'boolean') existing.checked = canon.checked; }
+    else current.accesses.push({ id:uid(), ...canon, builtIn:true });
+  });
+  CANON_SCENARIO.forEach((canon) => {
+    const existing = current.scenario.find((entry) => entry.title === canon.title);
+    if (existing) { existing.builtIn = true; }
+    else current.scenario.push({ id:uid(), ...canon, at:new Date().toISOString(), builtIn:true });
+  });
+  let lest = current.merchant.find((item) => item.kind === 'rame-lest' || item.name === 'Lest de Rame de guerre');
+  if (!lest) current.merchant.unshift({ id:uid(), name:'Lest de Rame de guerre', effect:'Améliore la Rame de guerre : +1 résistance et +25 dégâts / 30 s. 7 lests disponibles au total. Résistance 8 = 325 dégâts / 30 s.', price:25, stock:7, consumable:false, damagePer30:0, kind:'rame-lest', builtIn:true });
+  else { Object.assign(lest,{name:'Lest de Rame de guerre',price:25,kind:'rame-lest',builtIn:true,consumable:false,effect:'Améliore la Rame de guerre : +1 résistance et +25 dégâts / 30 s. 7 lests disponibles au total. Résistance 8 = 325 dégâts / 30 s.'}); if (!Number.isFinite(Number(lest.stock))) lest.stock=7; }
+  return current;
+}
+
 function mergeState(saved){
   const base = makeDefaultState();
   if (!saved || typeof saved !== 'object') return base;
-  return {
+  const merged = {
     ...base,
     ...saved,
     version: APP_VERSION,
@@ -67,6 +119,7 @@ function mergeState(saved){
     combat: { enemies: Array.isArray(saved.combat?.enemies) ? saved.combat.enemies : [] },
     ui: { ...base.ui, ...(saved.ui || {}) }
   };
+  return normalizeCanonicalData(merged);
 }
 
 function loadState(){
@@ -179,6 +232,32 @@ function renderCharacter(){
   `).join('');
 }
 
+function damageRateLabel(item){
+  if (!Number(item.damagePer30)) return '';
+  if (Number(item.rateDamage) > 0 && Number(item.rateSeconds) > 0) return `⚔ ${item.rateDamage} dégâts / ${item.rateSeconds} s`;
+  return `⚔ ${item.damagePer30} dégâts / 30 s`;
+}
+
+function activeEnemy(){ return state.combat.enemies.find((enemy) => !enemy.defeated) || null; }
+
+function travelMath(){
+  const gameDistance = Math.max(0, Number($('travelDistance')?.value) || 0);
+  const isScout = /éclaireur/i.test(state.character.className || '');
+  const effortDistance = isScout ? gameDistance / 2 : gameDistance;
+  const duration = effortDistance * 5;
+  return { gameDistance, effortDistance, duration, isScout };
+}
+
+function fmtNumber(value){ return Number.isInteger(value) ? String(value) : Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2}); }
+
+function updateTravelCalculation(){
+  if (!$('travelDistance')) return null;
+  const calc = travelMath();
+  $('travelEffortDistance').textContent = `${fmtNumber(calc.effortDistance)} km`;
+  $('travelCalculatedTime').textContent = `${fmtNumber(calc.duration)} min`;
+  return calc;
+}
+
 function renderEquipment(){
   $('poAmount').textContent = state.po;
   $('poAmountLarge').textContent = state.po;
@@ -189,14 +268,14 @@ function renderEquipment(){
     return;
   }
   list.innerHTML = state.equipment.map((item) => `
-    <article class="inventory-item">
+    <article class="inventory-item equipment-item">
       <div class="item-row">
         <div class="item-main">
           <div class="item-title">${esc(item.name)}${item.qty > 1 ? ` ×${item.qty}` : ''}</div>
           <div class="item-copy">${esc(item.effect || 'Aucun effet renseigné.')}</div>
           <div class="pills">
-            ${item.damagePer30 ? `<span class="pill">⚔ ${item.damagePer30} / 30 s</span>` : ''}
-            ${item.consumable ? '<span class="pill gold">usage unique</span>' : '<span class="pill">équipement</span>'}
+            ${item.damagePer30 ? `<span class="pill damage-pill">${esc(damageRateLabel(item))}</span>` : ''}
+            ${item.consumable ? '<span class="pill gold">usage unique</span>' : ''}
           </div>
         </div>
       </div>
@@ -210,7 +289,9 @@ function renderEquipment(){
 
 function renderTravel(){
   const t = state.lastTravel;
-  $('lastTravel').innerHTML = t ? `Dernier trajet : <strong>${esc(t.from || '?')} → ${esc(t.to || '?')}</strong>${t.duration ? ` · ${t.duration} min` : ''}${t.mode ? ` · ${esc(t.mode)}` : ''}` : '';
+  if (t?.gameDistance != null && document.activeElement !== $('travelDistance')) $('travelDistance').value = t.gameDistance;
+  const calc = updateTravelCalculation();
+  $('lastTravel').innerHTML = t ? `Dernier trajet : <strong>${esc(t.from || '?')} → ${esc(t.to || '?')}</strong>${t.gameDistance != null ? ` · ${fmtNumber(t.gameDistance)} km dans le jeu` : ''}${t.effortDistance != null ? ` · ${fmtNumber(t.effortDistance)} km IRL` : ''}${t.duration ? ` · ${fmtNumber(t.duration)} min` : ''}` : '';
   if (state.lastDice?.rolls?.length) {
     $('diceResults').innerHTML = state.lastDice.rolls.map((roll) => `<div class="die">${roll}</div>`).join('');
     $('diceTotal').textContent = `Total : ${state.lastDice.rolls.reduce((a,b) => a+b, 0)}`;
@@ -276,43 +357,38 @@ function updateSoloCount(){
 
 function renderCombat(){
   const list = $('combatEnemies');
-  if (!state.combat.enemies.length) {
+  const alive = state.combat.enemies.filter((enemy) => !enemy.defeated);
+  const current = alive[0] || null;
+  const defeatedCount = state.combat.enemies.filter((enemy) => enemy.defeated).length;
+  if (!current) {
     list.innerHTML = '<div class="paper-card empty-state">Aucun ennemi. Profite du calme tant qu’il dure.</div>';
+    $('currentTargetLabel').textContent = 'Aucun ennemi actif';
   } else {
-    list.innerHTML = state.combat.enemies.map((enemy) => {
-      const hp = Math.max(0, enemy.hp);
-      const percent = enemy.maxHp ? Math.max(0, Math.min(100, hp / enemy.maxHp * 100)) : 0;
-      return `
-        <article class="enemy-card ${enemy.defeated ? 'defeated' : ''}">
-          <div class="enemy-top"><div class="enemy-name">${esc(enemy.name)}</div><div class="enemy-hp">${hp}/${enemy.maxHp} PV</div></div>
-          <div class="hp-track"><div class="hp-fill" style="width:${percent}%"></div></div>
-          <div class="enemy-bottom">
-            <div class="pills"><span class="pill gold">${enemy.reward || 0} PO</span>${enemy.defeated ? '<span class="pill">Vaincu</span>' : ''}</div>
-            <button class="btn ghost small" type="button" data-action="remove-enemy" data-id="${enemy.id}">Retirer</button>
-          </div>
-        </article>`;
-    }).join('');
+    const hp = Math.max(0, current.hp);
+    const percent = current.maxHp ? Math.max(0, Math.min(100, hp / current.maxHp * 100)) : 0;
+    const queue = alive.slice(1);
+    list.innerHTML = `
+      <article class="enemy-card active-enemy">
+        <div class="section-kicker">Ennemi actuel</div>
+        <div class="enemy-top"><div class="enemy-name">${esc(current.name)}</div><div class="enemy-hp">${hp}/${current.maxHp} PV</div></div>
+        <div class="hp-track"><div class="hp-fill" style="width:${percent}%"></div></div>
+        <div class="enemy-bottom"><div class="pills"><span class="pill gold">${current.reward || 0} PO</span></div><button class="btn ghost small" type="button" data-action="remove-enemy" data-id="${current.id}">Retirer</button></div>
+      </article>
+      ${queue.length ? `<div class="paper-card enemy-queue"><div class="section-kicker">Ensuite</div><div class="queue-list">${queue.map((enemy) => `<span>${esc(enemy.name)} · ${enemy.hp} PV</span>`).join('')}</div></div>` : ''}
+      ${defeatedCount ? `<div class="combat-progress">${defeatedCount} ennemi${defeatedCount > 1 ? 's' : ''} déjà vaincu${defeatedCount > 1 ? 's' : ''}.</div>` : ''}`;
+    $('currentTargetLabel').textContent = `Les dégâts s’appliquent automatiquement à ${current.name}.`;
   }
-  renderDamageTargets();
+  $('applyDamageBtn').disabled = !current;
+  $('manualDamageBtn').disabled = !current;
   renderDamageWeapons();
   renderCombatConsumables();
-}
-
-function renderDamageTargets(){
-  const select = $('damageTarget');
-  const current = select.value;
-  const alive = state.combat.enemies.filter((enemy) => !enemy.defeated);
-  select.innerHTML = alive.length ? alive.map((enemy) => `<option value="${enemy.id}">${esc(enemy.name)} — ${enemy.hp} PV</option>`).join('') : '<option value="">Aucune cible</option>';
-  if (alive.some((enemy) => enemy.id === current)) select.value = current;
-  $('applyDamageBtn').disabled = !alive.length;
-  $('manualDamageBtn').disabled = !alive.length;
 }
 
 function renderDamageWeapons(){
   const select = $('damageWeapon');
   const current = select.value;
   const weapons = state.equipment.filter((item) => Number(item.damagePer30) > 0);
-  select.innerHTML = weapons.length ? weapons.map((item) => `<option value="${item.id}">${esc(item.name)} — ${item.damagePer30}/30 s</option>`).join('') : '<option value="">Aucun équipement avec dégâts</option>';
+  select.innerHTML = weapons.length ? weapons.map((item) => `<option value="${item.id}">${esc(item.name)} — ${esc(damageRateLabel(item).replace('⚔ ',''))}</option>`).join('') : '<option value="">Aucun équipement avec dégâts</option>';
   if (weapons.some((item) => item.id === current)) select.value = current;
   updateDamagePreview();
 }
@@ -324,11 +400,16 @@ function renderCombatConsumables(){
 
 function renderAccess(){
   const list = $('accessList');
-  list.innerHTML = state.accesses.length ? state.accesses.map((item) => `
-    <div class="check-item">
-      <label><input type="checkbox" data-action="toggle-access" data-id="${item.id}" ${item.checked ? 'checked' : ''}/><span>${esc(item.name)}</span></label>
-      <button class="icon-delete" type="button" data-action="delete-access" data-id="${item.id}" aria-label="Supprimer">✕</button>
-    </div>`).join('') : '<div class="empty-state">Aucun accès ajouté pour le moment.</div>';
+  const collator = new Intl.Collator('fr', { sensitivity:'base' });
+  const renderGroup = (title, helper, group) => {
+    const items = state.accesses.filter((item) => (item.group || 'restricted') === group).sort((a,b) => collator.compare(a.name,b.name));
+    return `<section class="paper-card access-group"><div class="card-heading"><div><div class="section-kicker">${esc(title)}</div><p class="helper">${esc(helper)}</p></div><strong class="access-count">${items.filter((i)=>i.checked).length}/${items.length}</strong></div><div class="check-list">${items.map((item) => `
+      <div class="check-item">
+        <label><input type="checkbox" data-action="toggle-access" data-id="${item.id}" ${item.checked ? 'checked' : ''}/><span>${esc(item.name)}</span></label>
+        ${item.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-access" data-id="${item.id}" aria-label="Supprimer">✕</button>`}
+      </div>`).join('')}</div></section>`;
+  };
+  list.innerHTML = renderGroup('Accès libres','Disponibles dès le départ.','free') + renderGroup('Accès restreints','À obtenir au cours de l’aventure.','restricted');
 }
 
 function renderZones(){
@@ -342,12 +423,21 @@ function renderZones(){
 
 function renderScenario(){
   const list = $('scenarioList');
-  list.innerHTML = state.scenario.length ? state.scenario.map((entry) => `
-    <article class="scenario-card">
-      <div class="item-row"><h2>${esc(entry.title || 'Passage découvert')}</h2><button class="icon-delete" type="button" data-action="delete-scenario" data-id="${entry.id}">✕</button></div>
-      <p>${esc(entry.text)}</p>
-      <div class="scenario-date">${esc(formatDate(entry.at))}</div>
-    </article>`).join('') : '<div class="paper-card empty-state">Le scénario se remplira au fur et à mesure de ce que tu découvres.</div>';
+  const canonOrder = new Map(CANON_SCENARIO.map((entry,index) => [entry.title,index]));
+  const entries = [...state.scenario].sort((a,b) => {
+    if (a.builtIn && b.builtIn) return (canonOrder.get(a.title) ?? 999) - (canonOrder.get(b.title) ?? 999);
+    if (a.builtIn) return -1; if (b.builtIn) return 1;
+    return new Date(a.at || 0) - new Date(b.at || 0);
+  });
+  list.innerHTML = `
+    <article class="scenario-card scenario-pitch"><div class="section-kicker">Pitch de départ</div><h2>Le Disque-Fonte est menacé</h2><p>${esc(SCENARIO_PITCH)}</p></article>
+    <div class="scenario-separator"><span>Scénario découvert</span></div>
+    ${entries.length ? entries.map((entry) => `
+      <article class="scenario-card ${entry.builtIn ? 'canon' : ''}">
+        <div class="item-row"><h2>${esc(entry.title || 'Passage découvert')}</h2>${entry.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-scenario" data-id="${entry.id}">✕</button>`}</div>
+        <p>${esc(entry.text)}</p>
+        ${entry.builtIn ? '<div class="scenario-date">Déjà découvert</div>' : `<div class="scenario-date">${esc(formatDate(entry.at))}</div>`}
+      </article>`).join('') : '<div class="paper-card empty-state">Le scénario se remplira au fur et à mesure de ce que tu découvres.</div>'}`;
 }
 
 function renderMerchant(){
@@ -357,10 +447,10 @@ function renderMerchant(){
     <article class="inventory-item">
       <div class="item-row">
         <div class="item-main"><div class="item-title">${esc(item.name)}</div><div class="item-copy">${esc(item.effect || 'Aucun effet renseigné.')}</div>
-          <div class="pills"><span class="pill gold">${item.price} PO</span><span class="pill">stock ${item.stock}</span>${item.consumable ? '<span class="pill">consommable</span>' : ''}${item.damagePer30 ? `<span class="pill">⚔ ${item.damagePer30}/30 s</span>` : ''}</div>
+          <div class="pills"><span class="pill gold">${item.price} PO</span><span class="pill">stock ${item.stock}</span>${item.consumable ? '<span class="pill">consommable</span>' : ''}${item.kind === 'rame-lest' ? '<span class="pill damage-pill">⚔ +25 dégâts / 30 s</span>' : (item.damagePer30 ? `<span class="pill damage-pill">⚔ ${item.damagePer30} dégâts / 30 s</span>` : '')}</div>
         </div>
       </div>
-      <div class="item-actions"><button class="btn primary small" type="button" data-action="buy-item" data-id="${item.id}" ${item.stock <= 0 ? 'disabled' : ''}>Acheter</button><button class="btn ghost small" type="button" data-action="delete-shop" data-id="${item.id}">Retirer</button></div>
+      <div class="item-actions"><button class="btn primary small" type="button" data-action="buy-item" data-id="${item.id}" ${item.stock <= 0 ? 'disabled' : ''}>Acheter</button>${item.builtIn ? '' : `<button class="btn ghost small" type="button" data-action="delete-shop" data-id="${item.id}">Retirer</button>`}</div>
     </article>`).join('') : '<div class="paper-card empty-state">L’échoppe est vide. Ajoute les articles du marchand rencontré.</div>';
 }
 
@@ -413,7 +503,8 @@ function addEquipment(){
     effect: $('eqEffect').value.trim(),
     qty: Math.max(1, Number($('eqQty').value) || 1),
     consumable: $('eqConsumable').checked,
-    damagePer30: Math.max(0, Number($('eqDamage').value) || 0)
+    damagePer30: Math.max(0, Number($('eqDamage').value) || 0),
+    rateDamage: Math.max(0, Number($('eqDamage').value) || 0), rateSeconds: 30
   });
   logEvent(`Objet ajouté : ${name}.`);
   $('eqName').value = ''; $('eqEffect').value = ''; $('eqQty').value = 1; $('eqDamage').value = 0; $('eqConsumable').checked = false;
@@ -430,14 +521,14 @@ function useEquipment(id){
 }
 
 function saveTravel(){
+  const calc = updateTravelCalculation() || travelMath();
   const travel = {
     from: $('travelFrom').value.trim(), to: $('travelTo').value.trim(),
-    duration: Math.max(0, Number($('travelDuration').value) || 0),
-    mode: $('travelMode').value.trim(), solo: $('travelSolo').checked,
-    at: new Date().toISOString()
+    gameDistance: calc.gameDistance, effortDistance: calc.effortDistance, duration: calc.duration,
+    solo: $('travelSolo').checked, at: new Date().toISOString()
   };
   state.lastTravel = travel;
-  logEvent(`Trajet ${travel.from || '?'} → ${travel.to || '?'}${travel.duration ? ` · ${travel.duration} min` : ''}${travel.mode ? ` · ${travel.mode}` : ''}.`);
+  logEvent(`Trajet ${travel.from || '?'} → ${travel.to || '?'} · ${fmtNumber(travel.gameDistance)} km dans le jeu · ${fmtNumber(travel.effortDistance)} km IRL · ${fmtNumber(travel.duration)} min.`);
   persist('Trajet enregistré');
 }
 
@@ -502,8 +593,8 @@ function updateDamagePreview(){
   return damage;
 }
 
-function dealDamage(enemyId, damage){
-  const enemy = state.combat.enemies.find((entry) => entry.id === enemyId);
+function dealDamage(damage){
+  const enemy = activeEnemy();
   if (!enemy || !damage) return;
   enemy.hp = Math.max(0, enemy.hp - damage);
   logEvent(`${damage} dégâts infligés à ${enemy.name}.`);
@@ -515,13 +606,14 @@ function dealDamage(enemyId, damage){
     }
     logEvent(`${enemy.name} vaincu${enemy.reward ? ` : +${enemy.reward} PO` : ''}.`);
   }
-  persist(enemy.defeated ? 'Ennemi vaincu !' : 'Dégâts appliqués');
+  persist(enemy.defeated ? 'Ennemi vaincu ! Ennemi suivant.' : 'Dégâts appliqués');
 }
 
 function addAccess(){
   const name = $('accessName').value.trim();
   if (!name) return;
-  state.accesses.push({ id: uid(), name, checked: false });
+  const group = $('accessType').value === 'free' ? 'free' : 'restricted';
+  state.accesses.push({ id: uid(), name, checked: group === 'free', group, builtIn:false });
   $('accessName').value = '';
   persist('Accès ajouté');
 }
@@ -563,11 +655,24 @@ function buyItem(id){
   const item = state.merchant.find((entry) => entry.id === id);
   if (!item || item.stock <= 0) return;
   if (state.po < item.price) return toast('Pas assez de PO');
+  if (item.kind === 'rame-lest') {
+    const rame = state.equipment.find((entry) => entry.name === 'Rame de guerre');
+    if (!rame) return toast('Il faut posséder la Rame de guerre');
+    state.po -= item.price;
+    item.stock -= 1;
+    rame.resistance = Math.min(8, Math.max(1, Number(rame.resistance) || 1) + 1);
+    rame.damagePer30 = Math.min(325, (Number(rame.damagePer30) || 150) + 25);
+    rame.rateDamage = rame.damagePer30; rame.rateSeconds = 30;
+    rame.effect = `Résistance ${rame.resistance} : ${rame.damagePer30} dégâts par 30 s.`;
+    logEvent(`Lest de Rame de guerre acheté : −${item.price} PO. Rame résistance ${rame.resistance}, ${rame.damagePer30} dégâts / 30 s.`);
+    persist('Rame de guerre améliorée');
+    return;
+  }
   state.po -= item.price;
   item.stock -= 1;
   const owned = state.equipment.find((entry) => entry.name.toLowerCase() === item.name.toLowerCase() && entry.consumable === item.consumable && Number(entry.damagePer30) === Number(item.damagePer30));
   if (owned) owned.qty += 1;
-  else state.equipment.push({ id: uid(), name:item.name, effect:item.effect, qty:1, consumable:item.consumable, damagePer30:item.damagePer30 });
+  else state.equipment.push({ id: uid(), name:item.name, effect:item.effect, qty:1, consumable:item.consumable, damagePer30:item.damagePer30, rateDamage:item.damagePer30, rateSeconds:30 });
   logEvent(`${item.name} acheté : −${item.price} PO.`);
   persist('Achat effectué');
 }
@@ -655,10 +760,10 @@ function handleDelegatedClick(event){
   if (action === 'use-equipment') useEquipment(id);
   if (action === 'delete-equipment') { state.equipment = state.equipment.filter((item) => item.id !== id); persist('Objet retiré'); }
   if (action === 'remove-enemy') { state.combat.enemies = state.combat.enemies.filter((enemy) => enemy.id !== id); persist('Ennemi retiré'); }
-  if (action === 'delete-access') { state.accesses = state.accesses.filter((item) => item.id !== id); persist(); }
+  if (action === 'delete-access') { state.accesses = state.accesses.filter((item) => item.id !== id || item.builtIn); persist(); }
   if (action === 'delete-zone') { state.zones = state.zones.filter((item) => item.id !== id); persist(); }
-  if (action === 'delete-scenario') { state.scenario = state.scenario.filter((item) => item.id !== id); persist(); }
-  if (action === 'delete-shop') { state.merchant = state.merchant.filter((item) => item.id !== id); persist(); }
+  if (action === 'delete-scenario') { state.scenario = state.scenario.filter((item) => item.id !== id || item.builtIn); persist(); }
+  if (action === 'delete-shop') { state.merchant = state.merchant.filter((item) => item.id !== id || item.builtIn); persist(); }
   if (action === 'buy-item') buyItem(id);
   if (action === 'delete-companion') { state.companions = state.companions.filter((item) => item.id !== id); persist(); }
 }
@@ -686,17 +791,18 @@ function bindEvents(){
   document.addEventListener('change', handleDelegatedChange);
 
   ['charName','charClass','charLevel','charPath','charQuest','charSpecial'].forEach((id) => $(id).addEventListener('input', saveCharacterFromInputs));
-  $('adjustPoBtn').addEventListener('click', () => openNumberModal({ title:'Ajuster la bourse', label:'Ajouter ou retirer des PO (ex. 50 ou -20)', value:0, confirmText:'Modifier', onConfirm:(delta) => { state.po = Math.max(0, state.po + delta); logEvent(`${delta >= 0 ? '+' : ''}${delta} PO. Solde : ${state.po} PO.`); persist('PO mis à jour'); } }));
+  $('adjustPoBtn').addEventListener('click', () => openNumberModal({ title:'Ajuster la bourse', label:'Ajouter ou retirer des poids d’or (ex. 50 ou -20)', value:0, confirmText:'Modifier', onConfirm:(delta) => { state.po = Math.max(0, state.po + delta); logEvent(`${delta >= 0 ? '+' : ''}${delta} PO. Solde : ${state.po} PO.`); persist('PO mis à jour'); } }));
   $('addEquipmentBtn').addEventListener('click', addEquipment);
   $('saveTravelBtn').addEventListener('click', saveTravel);
   $('rollDiceBtn').addEventListener('click', rollDice);
   $('encounterType').addEventListener('change', renderEncounterFields);
   $('travelSolo').addEventListener('change', updateSoloCount);
+  $('travelDistance').addEventListener('input', updateTravelCalculation);
   $('addEnemyBtn').addEventListener('click', addEnemyManual);
   $('damageWeapon').addEventListener('change', updateDamagePreview);
   $('effortSeconds').addEventListener('input', updateDamagePreview);
-  $('applyDamageBtn').addEventListener('click', () => { const damage = updateDamagePreview(); if (!damage) return toast('Aucun dégât à appliquer'); dealDamage($('damageTarget').value, damage); });
-  $('manualDamageBtn').addEventListener('click', () => openNumberModal({ title:'Dégâts manuels', label:'Nombre de dégâts', value:0, onConfirm:(damage) => { damage = Math.max(0, damage); if (damage) dealDamage($('damageTarget').value, damage); } }));
+  $('applyDamageBtn').addEventListener('click', () => { const damage = updateDamagePreview(); if (!damage) return toast('Aucun dégât à appliquer'); dealDamage(damage); });
+  $('manualDamageBtn').addEventListener('click', () => openNumberModal({ title:'Dégâts manuels', label:'Nombre de dégâts', value:0, onConfirm:(damage) => { damage = Math.max(0, damage); if (damage) dealDamage(damage); } }));
   $('addAccessBtn').addEventListener('click', addAccess);
   $('addZoneBtn').addEventListener('click', addZone);
   $('addScenarioBtn').addEventListener('click', addScenario);

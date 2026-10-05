@@ -9,3 +9,12 @@ La partie est sauvegardée automatiquement dans le stockage local du navigateur.
 ## GitHub Pages
 
 L'application est statique : il suffit de publier la branche `main`, dossier `/ (root)`, avec GitHub Pages.
+
+
+## V3
+- Inventaire plus lisible ; PO = poids d’or.
+- Gants basiques : 10 dégâts / 10 s.
+- Trajets saisis en km dans le jeu, conversion automatique en effort IRL et minutes.
+- Combat séquentiel : un ennemi actif à la fois.
+- Lests de Rame de guerre intégrés au marchand.
+- Pitch et scénario découvert préchargés ; accès libres/restreints préchargés et triés.

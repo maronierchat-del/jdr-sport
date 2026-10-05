@@ -245,3 +245,16 @@ p{margin-bottom:0}
 }
 @media(min-width:760px){.content{padding:20px 18px 40px}.hero-panel{min-height:230px}.quick-grid{grid-template-columns:repeat(4,1fr)}.chapter-grid{grid-template-columns:repeat(3,1fr)}.chapter-card.wide{grid-column:auto}.paper-card{padding:20px}}
 .modal-backdrop{position:fixed;inset:0;z-index:120;background:rgba(5,9,6,.68);backdrop-filter:blur(6px);display:grid;place-items:center;padding:18px}.modal-card{width:min(100%,420px);background:linear-gradient(180deg,#f5ecd8,#e9dcc1);color:var(--ink);border:1px solid rgba(222,199,145,.5);border-radius:22px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.45)}.modal-card h2{font-size:1.35rem;margin-bottom:15px}.modal-card .button-row{margin-top:15px}
+
+
+/* V3 — lisibilité et règles de jeu */
+.coin-pouch.compact{min-width:58px;padding:6px 9px;border-radius:13px}
+.coin-pouch.compact strong{font-size:1.08rem}.coin-pouch.compact span{font-size:.55rem}
+.compact-wallet{padding:12px 15px}.wallet-line{font-family:Georgia,serif;font-size:1rem;color:#4d4437;margin-top:2px}.wallet-line strong{font-size:1.08rem;color:#7c642f}
+.equipment-item{padding:19px 18px}.equipment-item .item-title{font-size:1.32rem;line-height:1.15}.equipment-item .item-copy{font-size:.9rem;line-height:1.5;margin-top:7px}.equipment-item .pills{margin-top:12px}
+.pill.damage-pill{font-size:.84rem;padding:7px 11px;background:#d7e2d3;color:#2f5035;border:1px solid rgba(54,88,59,.12)}
+.travel-calc{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.travel-calc>div{display:grid;gap:2px;padding:12px 14px;border-radius:15px;background:rgba(255,251,241,.65);border:1px solid var(--line)}.travel-calc span{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#7b6f5c;font-weight:900}.travel-calc strong{font-family:Georgia,serif;font-size:1.25rem;color:#36573b}.travel-rule{margin-top:9px}
+.current-target{padding:10px 12px;border-radius:12px;background:#e3eadf;color:#35523a;font-weight:800;font-size:.82rem}.active-enemy{border:1px solid rgba(137,70,58,.24)}.enemy-queue{margin-top:10px}.queue-list{display:grid;gap:6px;margin-top:8px}.queue-list span{display:block;padding:8px 10px;border-radius:10px;background:rgba(255,251,241,.55);font-size:.82rem;color:#5e5548}.combat-progress{text-align:center;color:#b9c2b8;font-size:.76rem;margin-top:8px}
+.access-groups{display:grid;gap:12px}.access-group{margin:0}.access-count{font-family:Georgia,serif;color:#6d592d;font-size:1.05rem}.access-add{display:grid;gap:10px;margin-top:12px}
+.scenario-pitch{border-color:rgba(198,167,91,.45);background:linear-gradient(145deg,#f5ead1,#e7d6b2)}.scenario-pitch h2{font-size:1.28rem;margin-top:4px}.scenario-pitch p{font-size:.93rem;line-height:1.55}.scenario-separator{display:flex;align-items:center;gap:10px;color:#cdb979;font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin:17px 3px 7px}.scenario-separator:before,.scenario-separator:after{content:"";height:1px;flex:1;background:rgba(222,199,141,.18)}.scenario-card.canon h2{font-size:1.16rem}.scenario-card.canon p{font-size:.87rem;line-height:1.55}
+@media(max-width:600px){.travel-calc{grid-template-columns:1fr 1fr}.equipment-item{padding:17px 15px}.equipment-item .item-title{font-size:1.25rem}.pill.damage-pill{font-size:.8rem}}
