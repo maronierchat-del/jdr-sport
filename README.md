@@ -27,3 +27,10 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 - La page Accès ne recense plus que les accès restreints.
 - Toutes les zones libres et restreintes sont dans Zones.
 - Une zone restreinte ne peut être validée que si son accès a d'abord été obtenu.
+
+
+## V3.3
+- Les pages Accès et Zones sont séparées en deux rubriques selon leur statut.
+- Accès : À obtenir / Obtenus.
+- Zones : À valider / Validées.
+- Tri alphabétique conservé dans chaque rubrique.

@@ -263,3 +263,5 @@ p{margin-bottom:0}
 .zone-item.locked input{cursor:not-allowed}
 .zone-lock{margin-left:auto;border-radius:999px;background:#ead6cf;color:#7b443b;padding:4px 8px;font-size:.66rem;font-weight:900;white-space:nowrap}
 .zone-lock.unlocked{background:#dbe6d8;color:#38533c}
+
+.empty-state.compact{padding:10px 0;text-align:left}

@@ -421,25 +421,47 @@ function renderAccess(){
   const list = $('accessList');
   const collator = new Intl.Collator('fr', { sensitivity:'base' });
   const items = [...state.accesses].sort((a,b) => collator.compare(a.name,b.name));
-  list.innerHTML = `<section class="paper-card access-group"><div class="card-heading"><div><div class="section-kicker">Accès restreints</div><p class="helper">Obtiens ici les clés, passages et autorisations nécessaires pour certaines zones.</p></div><strong class="access-count">${items.filter((i)=>i.checked).length}/${items.length}</strong></div><div class="check-list">${items.map((item) => `
+  const pending = items.filter((item) => !item.checked);
+  const obtained = items.filter((item) => item.checked);
+  const renderItems = (group) => group.length ? group.map((item) => `
     <div class="check-item">
       <label><input type="checkbox" data-action="toggle-access" data-id="${item.id}" ${item.checked ? 'checked' : ''}/><span>${esc(item.name)}</span></label>
       ${item.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-access" data-id="${item.id}" aria-label="Supprimer">✕</button>`}
-    </div>`).join('')}</div></section>`;
+    </div>`).join('') : '<div class="empty-state compact">Aucun.</div>';
+  list.innerHTML = `
+    <section class="paper-card access-group">
+      <div class="card-heading"><div><div class="section-kicker">À obtenir</div><p class="helper">Accès restreints encore verrouillés.</p></div><strong class="access-count">${pending.length}</strong></div>
+      <div class="check-list">${renderItems(pending)}</div>
+    </section>
+    <section class="paper-card access-group">
+      <div class="card-heading"><div><div class="section-kicker">Obtenus</div><p class="helper">Accès restreints déjà débloqués.</p></div><strong class="access-count">${obtained.length}</strong></div>
+      <div class="check-list">${renderItems(obtained)}</div>
+    </section>`;
 }
 
 function renderZones(){
   const list = $('zonesList');
   const collator = new Intl.Collator('fr', { sensitivity:'base' });
   const zones = [...state.zones].sort((a,b) => collator.compare(a.name,b.name));
-  list.innerHTML = zones.length ? zones.map((zone) => {
+  const pending = zones.filter((zone) => !zone.validated);
+  const validated = zones.filter((zone) => zone.validated);
+  const renderZoneItems = (group) => group.length ? group.map((zone) => {
     const access = zone.requiresAccess ? state.accesses.find((item) => item.name === (zone.accessName || zone.name)) : null;
     const unlocked = !zone.requiresAccess || !!access?.checked;
     return `<div class="check-item zone-item ${unlocked ? '' : 'locked'}">
       <label><input type="checkbox" data-action="toggle-zone" data-id="${zone.id}" ${zone.validated ? 'checked' : ''} ${unlocked ? '' : 'disabled'}/><span>${esc(zone.name)}</span>${zone.requiresAccess ? `<span class="zone-lock ${unlocked ? 'unlocked' : ''}">${unlocked ? '🔓 accès obtenu' : '🔒 accès requis'}</span>` : ''}</label>
       ${zone.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-zone" data-id="${zone.id}" aria-label="Supprimer">✕</button>`}
     </div>`;
-  }).join('') : '<div class="empty-state">Aucune zone ajoutée.</div>';
+  }).join('') : '<div class="empty-state compact">Aucune.</div>';
+  list.innerHTML = `
+    <section class="paper-card access-group">
+      <div class="card-heading"><div><div class="section-kicker">À valider</div><p class="helper">Zones qu’il reste à terminer.</p></div><strong class="access-count">${pending.length}</strong></div>
+      <div class="check-list">${renderZoneItems(pending)}</div>
+    </section>
+    <section class="paper-card access-group">
+      <div class="card-heading"><div><div class="section-kicker">Validées</div><p class="helper">Zones déjà terminées.</p></div><strong class="access-count">${validated.length}</strong></div>
+      <div class="check-list">${renderZoneItems(validated)}</div>
+    </section>`;
 }
 
 function renderScenario(){
