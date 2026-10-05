@@ -265,3 +265,12 @@ p{margin-bottom:0}
 .zone-lock.unlocked{background:#dbe6d8;color:#38533c}
 
 .empty-state.compact{padding:10px 0;text-align:left}
+
+
+/* V3.4 — rubriques de progression très visibles */
+.status-group{overflow:hidden}
+.group-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:12px;margin-bottom:2px;border-bottom:2px solid rgba(117,91,42,.18)}
+.group-title{font-family:Georgia,serif;font-size:1.45rem;line-height:1.1;color:var(--ink);margin:0 0 5px}
+.status-group .check-list{margin-top:2px}
+.status-group .access-count{min-width:38px;height:38px;display:grid;place-items:center;border-radius:999px;background:rgba(181,147,75,.16);border:1px solid rgba(125,98,42,.22);font-size:1rem}
+@media(max-width:520px){.group-title{font-size:1.28rem}.group-heading{gap:10px}.status-group{padding:16px}}
