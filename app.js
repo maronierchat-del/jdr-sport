@@ -881,9 +881,56 @@ function handleDelegatedChange(event){
   }
 }
 
+
+let deferredInstallPrompt = null;
+
+function isStandaloneApp(){
+  return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function updateInstallCard(){
+  const card = $('installAppCard');
+  const btn = $('installAppBtn');
+  const hint = $('installHint');
+  if (!card || !btn || !hint) return;
+  if (isStandaloneApp()) { card.hidden = true; return; }
+  card.hidden = false;
+  if (deferredInstallPrompt) {
+    btn.disabled = false;
+    hint.textContent = 'Ajoute le JDR à ton écran d’accueil pour l’ouvrir comme une application.';
+  } else {
+    btn.disabled = false;
+    hint.textContent = 'Sur Android, Chrome peut proposer l’installation directement ou depuis son menu.';
+  }
+}
+
+async function installApp(){
+  if (!deferredInstallPrompt) {
+    toast('Dans Chrome : menu ⋮ → Installer l’application / Ajouter à l’écran d’accueil');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  try { await deferredInstallPrompt.userChoice; } catch {}
+  deferredInstallPrompt = null;
+  updateInstallCard();
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  updateInstallCard();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  updateInstallCard();
+  toast('Fitland est installé !');
+});
+
 function bindEvents(){
   document.addEventListener('click', handleDelegatedClick);
   document.addEventListener('change', handleDelegatedChange);
+  $('installAppBtn')?.addEventListener('click', installApp);
 
   ['charName','charClass','charLevel','charPath','charQuest','charSpecial'].forEach((id) => $(id).addEventListener('input', saveCharacterFromInputs));
   $('adjustPoBtn').addEventListener('click', () => openNumberModal({ title:'Ajuster la bourse', label:'Ajouter ou retirer des poids d’or (ex. 50 ou -20)', value:0, confirmText:'Modifier', onConfirm:(delta) => { state.po = Math.max(0, state.po + delta); logEvent(`${delta >= 0 ? '+' : ''}${delta} PO. Solde : ${state.po} PO.`); persist('PO mis à jour'); } }));
@@ -917,6 +964,7 @@ function init(){
   bindEvents();
   renderEncounterFields();
   renderAll();
+  updateInstallCard();
   requestPersistentStorage();
   go(state.ui.lastView || 'home');
 }

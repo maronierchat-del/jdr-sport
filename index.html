@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#17241b" />
   <meta name="description" content="Carnet de campagne du JDR sportif La Communauté des Abdos." />
-  <link rel="manifest" href="manifest.webmanifest?v=3.5" />
+  <link rel="manifest" href="manifest.webmanifest?v=3.8" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=3.5" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Fitland" />
+  <link rel="stylesheet" href="styles.css?v=3.8" />
   <title>La Communauté des Abdos — Fitland</title>
 </head>
 <body>
@@ -64,6 +68,15 @@
             <span class="quick-icon">🗺️</span>
             <span><strong>Zones</strong><small id="homeZonesText">—</small></span>
           </button>
+        </div>
+
+        <div class="paper-card install-card" id="installAppCard" hidden>
+          <div class="install-app-copy">
+            <div class="section-kicker">Application</div>
+            <h2>Installer Fitland</h2>
+            <p class="body-copy" id="installHint">Ajoute le JDR à ton écran d’accueil pour l’ouvrir comme une application.</p>
+          </div>
+          <button class="btn primary install-app-btn" id="installAppBtn" type="button">Installer l’appli</button>
         </div>
 
         <div class="paper-card recent-card">
@@ -340,15 +353,14 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
-    // Nettoyage des anciens caches PWA : les mises à jour doivent toujours charger
-    // les fichiers de la même version. La sauvegarde localStorage n'est pas touchée.
+    // Service worker minimal : nécessaire à certains navigateurs pour l'installation,
+    // mais aucune ressource n'est mise en cache. La sauvegarde localStorage reste intacte.
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((reg) => reg.unregister()))).catch(() => {});
-    }
-    if ('caches' in window) {
-      caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('fitland-')).map((key) => caches.delete(key)))).catch(() => {});
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=3.8', { scope: './' }).catch(() => {});
+      });
     }
   </script>
-  <script src="app.js?v=3.7" defer></script>
+  <script src="app.js?v=3.8" defer></script>
 </body>
 </html>

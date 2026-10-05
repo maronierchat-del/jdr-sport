@@ -284,3 +284,8 @@ p{margin-bottom:0}
 
 /* V3.7 — pitch restauré + édition au stylo */
 .icon-edit{width:34px;height:34px;border:1px solid rgba(92,76,45,.22);border-radius:10px;background:rgba(255,255,255,.38);color:#4e5f44;font-size:1.15rem;font-weight:900;display:grid;place-items:center;cursor:pointer;line-height:1}.icon-edit:hover{background:rgba(255,255,255,.7)}
+
+.install-card{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.install-app-copy{min-width:0;flex:1}.install-app-copy h2{margin:2px 0 5px}.install-app-copy p{margin:0}
+.install-app-btn{flex:0 0 auto;white-space:nowrap}
+@media(max-width:560px){.install-card{align-items:stretch;flex-direction:column}.install-app-btn{width:100%}}
