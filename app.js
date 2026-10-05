@@ -1,7 +1,7 @@
 'use strict';
 
 const STORAGE_KEY = 'fitland-jdr-save-v2';
-const APP_VERSION = 5;
+const APP_VERSION = 6;
 
 const FREE_ACCESS_NAMES = [
   'Fontaria','Entrepôts Shaker+','Tique-Couenne','Nosferathon','Omega Beach','Garde Froide',
@@ -13,6 +13,8 @@ const RESTRICTED_ACCESS_NAMES = [
   'Île des poids guidés','Antre de Mollefesse','Falaises Olympiques','Temple de la prophétie','Caverne des nuages sans fin','Exploration du Temple de Tasmina',
   'Ruines du Golem','Salle secrète de l’Oasis','La Communauté des Abdos','L’Audience du Khôl','Les Ombres de Nosferathon','Au-delà de la fin'
 ].sort((a,b) => a.localeCompare(b, 'fr'));
+const SCENARIO_PITCH = 'Arno ayant disparu de longue date, en d’étranges circonstances, de sombres puissances s’agitent dans l’ombre. Le traître et ses légions impies ont envahi le Temple de Tasmina. En l’absence de son protecteur, qui ramènera l’équilibre ?';
+
 const CANON_SCENARIO = [
   { canonicalKey:'depart', title:'Départ', text:'Eleanore, éclaireuse débutante, surveille la lisière de la Forêt de Brise Mollets. Une intrusion de Zomfits frappe le Sud du Fitland. Eleanore se replie dans la Plaine du Fitland.' },
   { canonicalKey:'plaine', title:'Plaine du Fitland', text:'Pendant le repli vers la Plaine du Fitland, Eleanore rencontre un collègue éclaireur, qui lui confie une mission de repérage du Dévers du Fitland, une zone périphérique du Temple de Tasmina tombé.' }
@@ -480,7 +482,8 @@ function renderScenario(){
     if (a.builtIn) return -1; if (b.builtIn) return 1;
     return new Date(a.at || 0) - new Date(b.at || 0);
   });
-  list.innerHTML = entries.length ? entries.map((entry) => {
+  const pitchHtml = `<article class="scenario-card scenario-pitch"><div class="section-kicker">Pitch de départ</div><h2>Le Disque-Fonte est menacé</h2><p>${esc(SCENARIO_PITCH)}</p></article><div class="scenario-separator">Chronologie de campagne</div>`;
+  list.innerHTML = pitchHtml + (entries.length ? entries.map((entry) => {
     if (editingScenarioId === entry.id) {
       return `
         <article class="scenario-card scenario-editing" data-scenario-card="${entry.id}">
@@ -499,14 +502,14 @@ function renderScenario(){
         <div class="item-row">
           <h2>${esc(entry.title || 'Passage découvert')}</h2>
           <div class="scenario-card-actions">
-            <button class="btn ghost small" type="button" data-action="edit-scenario" data-id="${entry.id}">Modifier</button>
+            <button class="icon-edit" type="button" data-action="edit-scenario" data-id="${entry.id}" aria-label="Modifier ce passage" title="Modifier">✎</button>
             ${entry.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-scenario" data-id="${entry.id}" aria-label="Supprimer">✕</button>`}
           </div>
         </div>
         <p>${esc(entry.text)}</p>
         ${entry.builtIn ? '<div class="scenario-date">Scénario de campagne</div>' : `<div class="scenario-date">${esc(formatDate(entry.at))}</div>`}
       </article>`;
-  }).join('') : '<div class="paper-card empty-state">Le scénario se remplira au fur et à mesure de ce que tu découvres.</div>';
+  }).join('') : '<div class="paper-card empty-state">Le scénario se remplira au fur et à mesure de ce que tu découvres.</div>');
 }
 function renderMerchant(){
   $('merchantPo').textContent = state.po;

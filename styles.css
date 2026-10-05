@@ -281,3 +281,6 @@ p{margin-bottom:0}
 .scenario-edit-form label{font-size:.75rem;font-weight:900;color:#5f5748}
 .scenario-edit-form input,.scenario-edit-form textarea{margin-top:6px}
 .scenario-edit-form textarea{min-height:150px;resize:vertical}
+
+/* V3.7 — pitch restauré + édition au stylo */
+.icon-edit{width:34px;height:34px;border:1px solid rgba(92,76,45,.22);border-radius:10px;background:rgba(255,255,255,.38);color:#4e5f44;font-size:1.15rem;font-weight:900;display:grid;place-items:center;cursor:pointer;line-height:1}.icon-edit:hover{background:rgba(255,255,255,.7)}

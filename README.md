@@ -50,3 +50,9 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 ## V3.6
 - Scénario remplacé par les deux passages définis par l’utilisatrice.
 - Chaque case du scénario est modifiable individuellement (titre + texte).
+
+## V3.7
+
+- Pitch de départ restauré au-dessus de la chronologie.
+- Les cases du scénario restent éditables individuellement.
+- Le bouton « Modifier » est remplacé par une icône stylo ✎.
