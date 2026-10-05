@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#17241b" />
+  <meta name="description" content="Carnet de campagne du JDR sportif La Communauté des Abdos." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>La Communauté des Abdos — Fitland</title>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" type="button" data-go="home" aria-label="Accueil">
+        <span class="brand-mark">⚔</span>
+        <span>
+          <strong>La Communauté des Abdos</strong>
+          <small>Chroniques de Fitland</small>
+        </span>
+      </button>
+      <div class="save-state" id="saveState"><span></span>Sauvegardé</div>
+    </header>
+
+    <main class="content" id="content">
+      <section class="view active" id="view-home">
+        <div class="hero-panel">
+          <div class="hero-rune" aria-hidden="true">ᛉ</div>
+          <div class="hero-copy">
+            <div class="eyebrow">Aventure en cours</div>
+            <h1 id="homeName">Eleanore</h1>
+            <p id="homeClass">Éclaireur · Niveau 1</p>
+          </div>
+          <div class="hero-coins">
+            <span>PO</span>
+            <strong id="homePo">495</strong>
+          </div>
+        </div>
+
+        <div class="quest-card paper-card">
+          <div class="section-kicker">Quête IRL</div>
+          <div class="quest-title" id="homeQuest">—</div>
+          <div class="quest-meta" id="homeQuestMeta">Objectif d'aventure personnel</div>
+        </div>
+
+        <div class="quick-grid">
+          <button class="quick-card" type="button" data-go="travel">
+            <span class="quick-icon">🧭</span>
+            <span><strong>Partir en trajet</strong><small>Lancer une rencontre</small></span>
+          </button>
+          <button class="quick-card" type="button" data-go="combat">
+            <span class="quick-icon">⚔️</span>
+            <span><strong>Combat</strong><small id="homeCombatText">Aucun ennemi actif</small></span>
+          </button>
+          <button class="quick-card" type="button" data-go="equipment">
+            <span class="quick-icon">🎒</span>
+            <span><strong>Équipement</strong><small id="homeEquipmentText">—</small></span>
+          </button>
+          <button class="quick-card" type="button" data-go="zones">
+            <span class="quick-icon">🗺️</span>
+            <span><strong>Zones</strong><small id="homeZonesText">—</small></span>
+          </button>
+        </div>
+
+        <div class="paper-card recent-card">
+          <div class="card-heading">
+            <div>
+              <div class="section-kicker">Dernières traces</div>
+              <h2>Journal d’aventure</h2>
+            </div>
+            <button class="text-btn" type="button" data-go="journal">Tout voir</button>
+          </div>
+          <div id="homeJournal" class="journal-mini"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-character">
+        <div class="page-heading">
+          <div><div class="eyebrow">Héroïne</div><h1>Fiche perso</h1></div>
+          <div class="crest">🦅</div>
+        </div>
+
+        <div class="paper-card character-card">
+          <div class="form-grid two">
+            <label>Nom<input id="charName" autocomplete="off" /></label>
+            <label>Classe<input id="charClass" autocomplete="off" /></label>
+            <label>Niveau<input id="charLevel" type="number" min="1" inputmode="numeric" /></label>
+            <label>Voie / discipline<input id="charPath" autocomplete="off" /></label>
+          </div>
+        </div>
+
+        <div class="paper-card">
+          <div class="card-heading"><div><div class="section-kicker">Caractéristiques</div><h2>Attributs</h2></div></div>
+          <div id="statsGrid" class="stats-grid"></div>
+        </div>
+
+        <div class="paper-card stack">
+          <label>Quête IRL<textarea id="charQuest" rows="4"></textarea></label>
+          <label>Capacité spéciale<textarea id="charSpecial" rows="3"></textarea></label>
+          <p class="helper">Les modifications de cette fiche sont sauvegardées automatiquement.</p>
+        </div>
+      </section>
+
+      <section class="view" id="view-equipment">
+        <div class="page-heading">
+          <div><div class="eyebrow">Inventaire</div><h1>Équipement</h1></div>
+          <div class="coin-pouch"><span>PO</span><strong id="poAmount">495</strong></div>
+        </div>
+
+        <div class="paper-card wallet-card">
+          <div><div class="section-kicker">Bourse</div><h2><span id="poAmountLarge">495</span> pièces d’or</h2></div>
+          <button class="btn ghost" type="button" id="adjustPoBtn">Ajuster</button>
+        </div>
+
+        <div id="equipmentList" class="inventory-list"></div>
+
+        <details class="paper-card add-panel">
+          <summary>＋ Ajouter un objet</summary>
+          <div class="stack add-panel-body">
+            <div class="form-grid two">
+              <label>Nom<input id="eqName" /></label>
+              <label>Quantité<input id="eqQty" type="number" min="1" value="1" inputmode="numeric" /></label>
+            </div>
+            <label>Effet / description<textarea id="eqEffect" rows="3"></textarea></label>
+            <div class="form-grid two">
+              <label>Dégâts / 30 s<input id="eqDamage" type="number" min="0" value="0" inputmode="numeric" /></label>
+              <label class="check-line"><input id="eqConsumable" type="checkbox" /> <span>Objet consommable</span></label>
+            </div>
+            <button class="btn primary" type="button" id="addEquipmentBtn">Ajouter à l’inventaire</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="view" id="view-travel">
+        <div class="page-heading">
+          <div><div class="eyebrow">Exploration</div><h1>Trajet</h1></div>
+          <div class="crest">🧭</div>
+        </div>
+
+        <div class="route-card paper-card">
+          <div class="route-line"><span class="route-dot"></span><span class="route-track"></span><span class="route-dot end"></span></div>
+          <div class="form-grid two route-grid">
+            <label>Départ<input id="travelFrom" placeholder="Sud du Fitland" /></label>
+            <label>Destination<input id="travelTo" placeholder="Plaine du Fitland" /></label>
+          </div>
+          <div class="form-grid two">
+            <label>Durée IRL (min)<input id="travelDuration" type="number" min="0" value="25" inputmode="numeric" /></label>
+            <label>Moyen de déplacement<input id="travelMode" placeholder="Trottinette" /></label>
+          </div>
+          <label class="check-line travel-check"><input id="travelSolo" type="checkbox" checked /> <span>Trajet solo : nombre d’ennemis ÷ 2, arrondi au supérieur</span></label>
+          <button class="btn primary full" type="button" id="saveTravelBtn">Enregistrer ce trajet</button>
+          <div id="lastTravel" class="last-travel"></div>
+        </div>
+
+        <div class="paper-card dice-card">
+          <div class="card-heading">
+            <div><div class="section-kicker">Rencontre</div><h2>Lancer les dés</h2></div>
+            <span class="die-symbol">⚄</span>
+          </div>
+          <div class="form-grid two compact">
+            <label>Nombre de dés<input id="diceCount" type="number" min="1" max="12" value="1" inputmode="numeric" /></label>
+            <label>Faces<select id="diceSides"><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option><option>20</option><option>100</option></select></label>
+          </div>
+          <button class="btn dice-btn full" type="button" id="rollDiceBtn">🎲 Lancer</button>
+          <div id="diceResults" class="dice-results"></div>
+          <div id="diceTotal" class="dice-total"></div>
+        </div>
+
+        <div class="paper-card">
+          <div class="card-heading"><div><div class="section-kicker">Résultat</div><h2>Rencontre de voyage</h2></div></div>
+          <label>Type de rencontre
+            <select id="encounterType">
+              <option value="none">Rien</option>
+              <option value="combat">Combat</option>
+              <option value="merchant">Marchand</option>
+              <option value="event">Événement</option>
+            </select>
+          </label>
+          <div id="encounterFields" class="encounter-fields"></div>
+        </div>
+
+        <div class="paper-card" id="travelConsumablesCard">
+          <div class="section-kicker">À portée de main</div>
+          <h2>Objets utilisables</h2>
+          <div id="travelConsumables" class="chip-wrap"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-combat">
+        <div class="page-heading combat-heading">
+          <div><div class="eyebrow">Affrontement</div><h1>Combat</h1></div>
+          <div class="crest">⚔️</div>
+        </div>
+
+        <div id="combatEnemies" class="enemy-list"></div>
+
+        <div class="paper-card attack-card">
+          <div class="card-heading"><div><div class="section-kicker">Action</div><h2>Infliger des dégâts</h2></div></div>
+          <div class="stack">
+            <label>Cible<select id="damageTarget"></select></label>
+            <label>Équipement<select id="damageWeapon"></select></label>
+            <div class="form-grid two">
+              <label>Temps d’effort (s)<input id="effortSeconds" type="number" min="0" value="30" inputmode="numeric" /></label>
+              <div class="damage-preview"><span>Dégâts calculés</span><strong id="damagePreview">0</strong></div>
+            </div>
+            <div class="button-row">
+              <button class="btn primary" type="button" id="applyDamageBtn">Appliquer</button>
+              <button class="btn ghost" type="button" id="manualDamageBtn">Dégâts manuels</button>
+            </div>
+            <div id="combatConsumables" class="chip-wrap"></div>
+          </div>
+        </div>
+
+        <details class="paper-card add-panel">
+          <summary>＋ Ajouter des ennemis manuellement</summary>
+          <div class="stack add-panel-body">
+            <div class="form-grid two">
+              <label>Ennemi<input id="enemyName" /></label>
+              <label>Nombre<input id="enemyCount" type="number" min="1" value="1" inputmode="numeric" /></label>
+              <label>PV chacun<input id="enemyHp" type="number" min="1" value="500" inputmode="numeric" /></label>
+              <label>Récompense PO / ennemi<input id="enemyReward" type="number" min="0" value="0" inputmode="numeric" /></label>
+            </div>
+            <button class="btn primary" type="button" id="addEnemyBtn">Ajouter au combat</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="view" id="view-more">
+        <div class="page-heading"><div><div class="eyebrow">Carnet de campagne</div><h1>Plus</h1></div></div>
+        <div class="chapter-grid">
+          <button class="chapter-card" data-go="access"><span>🔑</span><strong>Accès</strong><small>Clés, passages, autorisations</small></button>
+          <button class="chapter-card" data-go="zones"><span>🗺️</span><strong>Zones</strong><small>Validées ou non</small></button>
+          <button class="chapter-card" data-go="scenario"><span>📜</span><strong>Scénario</strong><small>Ce qui a été découvert</small></button>
+          <button class="chapter-card" data-go="merchant"><span>🏕️</span><strong>Marchand</strong><small>Acheter et créer des articles</small></button>
+          <button class="chapter-card" data-go="companions"><span>🧑‍🤝‍🧑</span><strong>Compagnons</strong><small>Alliés de route</small></button>
+          <button class="chapter-card" data-go="journal"><span>📖</span><strong>Journal</strong><small>Historique automatique</small></button>
+          <button class="chapter-card wide" data-go="backup"><span>💾</span><strong>Sauvegarde</strong><small>Exporter, importer, réinitialiser</small></button>
+        </div>
+      </section>
+
+      <section class="view" id="view-access">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Progression</div><h1>Accès</h1></div></div>
+        <div class="paper-card"><div id="accessList" class="check-list"></div></div>
+        <div class="paper-card inline-add"><input id="accessName" placeholder="Nouvel accès" /><button class="btn primary" id="addAccessBtn">Ajouter</button></div>
+      </section>
+
+      <section class="view" id="view-zones">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Exploration</div><h1>Zones</h1></div></div>
+        <div class="paper-card"><div id="zonesList" class="check-list"></div></div>
+        <div class="paper-card inline-add"><input id="zoneName" placeholder="Nouvelle zone" /><button class="btn primary" id="addZoneBtn">Ajouter</button></div>
+      </section>
+
+      <section class="view" id="view-scenario">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Histoire</div><h1>Scénario</h1></div></div>
+        <div id="scenarioList" class="scenario-list"></div>
+        <details class="paper-card add-panel" open>
+          <summary>＋ Ajouter un passage découvert</summary>
+          <div class="stack add-panel-body">
+            <label>Titre<input id="scenarioTitle" /></label>
+            <label>Texte<textarea id="scenarioText" rows="6"></textarea></label>
+            <button class="btn primary" id="addScenarioBtn">Ajouter au scénario</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="view" id="view-merchant">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Échoppe</div><h1>Marchand</h1></div><div class="coin-pouch small"><span>PO</span><strong id="merchantPo">495</strong></div></div>
+        <div id="merchantList" class="inventory-list"></div>
+        <details class="paper-card add-panel">
+          <summary>＋ Ajouter un article au marchand</summary>
+          <div class="stack add-panel-body">
+            <div class="form-grid two">
+              <label>Nom<input id="shopName" /></label>
+              <label>Prix (PO)<input id="shopPrice" type="number" min="0" value="0" inputmode="numeric" /></label>
+              <label>Stock<input id="shopStock" type="number" min="1" value="1" inputmode="numeric" /></label>
+              <label>Dégâts / 30 s<input id="shopDamage" type="number" min="0" value="0" inputmode="numeric" /></label>
+            </div>
+            <label>Effet / description<textarea id="shopEffect" rows="3"></textarea></label>
+            <label class="check-line"><input id="shopConsumable" type="checkbox" /> <span>Article consommable</span></label>
+            <button class="btn primary" id="addShopItemBtn">Ajouter au marchand</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="view" id="view-companions">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Alliés</div><h1>Compagnons</h1></div></div>
+        <div id="companionsList" class="companion-list"></div>
+        <details class="paper-card add-panel">
+          <summary>＋ Ajouter un compagnon</summary>
+          <div class="stack add-panel-body">
+            <label>Nom<input id="compName" /></label>
+            <label>Capacité / notes<textarea id="compNotes" rows="4"></textarea></label>
+            <button class="btn primary" id="addCompanionBtn">Ajouter</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="view" id="view-journal">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Historique</div><h1>Journal d’aventure</h1></div><button class="text-btn danger" id="clearJournalBtn">Vider</button></div>
+        <div id="journalList" class="journal-list"></div>
+      </section>
+
+      <section class="view" id="view-backup">
+        <div class="subpage-head"><button class="back-btn" data-go="more">←</button><div><div class="eyebrow">Données</div><h1>Sauvegarde</h1></div></div>
+        <div class="paper-card stack">
+          <div class="section-kicker">Sauvegarde automatique</div>
+          <h2>Cette partie reste sur cet appareil</h2>
+          <p class="body-copy">L’application sauvegarde automatiquement dans le navigateur. Tant que tu ouvres toujours la même adresse GitHub Pages sur cet appareil, la partie est retrouvée au prochain lancement.</p>
+          <div class="button-row vertical-mobile">
+            <button class="btn primary" id="exportBtn">Exporter la sauvegarde</button>
+            <label class="btn ghost file-btn">Importer<input id="importFile" type="file" accept="application/json" hidden /></label>
+          </div>
+        </div>
+        <div class="paper-card danger-zone">
+          <div><div class="section-kicker">Zone dangereuse</div><h2>Réinitialiser la partie</h2><p>Revient aux données de départ de la V1.</p></div>
+          <button class="btn danger" id="resetBtn">Tout réinitialiser</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navigation principale">
+      <button class="nav-btn active" type="button" data-view="home" data-go="home"><span>⌂</span><small>Accueil</small></button>
+      <button class="nav-btn" type="button" data-view="character" data-go="character"><span>♟</span><small>Perso</small></button>
+      <button class="nav-btn" type="button" data-view="equipment" data-go="equipment"><span>🎒</span><small>Équipement</small></button>
+      <button class="nav-btn" type="button" data-view="travel" data-go="travel"><span>🧭</span><small>Trajet</small></button>
+      <button class="nav-btn" type="button" data-view="combat" data-go="combat"><span>⚔</span><small>Combat</small></button>
+      <button class="nav-btn" type="button" data-view="more" data-go="more"><span>☰</span><small>Plus</small></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
