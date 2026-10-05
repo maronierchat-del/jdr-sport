@@ -1,7 +1,7 @@
 'use strict';
 
 const STORAGE_KEY = 'fitland-jdr-save-v2';
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 
 const FREE_ACCESS_NAMES = [
   'Fontaria','Entrepôts Shaker+','Tique-Couenne','Nosferathon','Omega Beach','Garde Froide',
@@ -13,12 +13,11 @@ const RESTRICTED_ACCESS_NAMES = [
   'Île des poids guidés','Antre de Mollefesse','Falaises Olympiques','Temple de la prophétie','Caverne des nuages sans fin','Exploration du Temple de Tasmina',
   'Ruines du Golem','Salle secrète de l’Oasis','La Communauté des Abdos','L’Audience du Khôl','Les Ombres de Nosferathon','Au-delà de la fin'
 ].sort((a,b) => a.localeCompare(b, 'fr'));
-const SCENARIO_PITCH = 'Arno a disparu. Le Traître et ses légions ont envahi le Temple de Tasmina. L’équilibre du Disque-Fonte est menacé.';
 const CANON_SCENARIO = [
-  { title:'Prologue — Sud du Fitland', text:'Eleanore, éclaireuse débutante au service de Gylmi, surveille la lisière de la Forêt de Brise Mollets. Une intrusion de Zomfits frappe le Sud du Fitland. Eleanore repousse l’attaque : 9 Zomfits vaincus. Le Sud du Fitland est validé. Elle doit ensuite rejoindre la Plaine du Fitland.' },
-  { title:'Plaine du Fitland', text:'Pendant le repli vers la Plaine du Fitland, Eleanore rencontre un collègue éclaireur. La Plaine est ensuite défendue contre une attaque : 6 Orcfits vaincus. La zone est validée.' },
-  { title:'Mission actuelle — Dévers du Fitland', text:'Le collègue éclaireur confie à Eleanore une mission de repérage du Dévers du Fitland, une zone périphérique du Temple de Tasmina tombé. Le Dévers est une destination de mission, pas un accès débloqué.' }
+  { canonicalKey:'depart', title:'Départ', text:'Eleanore, éclaireuse débutante, surveille la lisière de la Forêt de Brise Mollets. Une intrusion de Zomfits frappe le Sud du Fitland. Eleanore se replie dans la Plaine du Fitland.' },
+  { canonicalKey:'plaine', title:'Plaine du Fitland', text:'Pendant le repli vers la Plaine du Fitland, Eleanore rencontre un collègue éclaireur, qui lui confie une mission de repérage du Dévers du Fitland, une zone périphérique du Temple de Tasmina tombé.' }
 ];
+const LEGACY_CANON_SCENARIO_TITLES = new Set(['Prologue — Sud du Fitland','Plaine du Fitland','Mission actuelle — Dévers du Fitland']);
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
@@ -106,10 +105,18 @@ function normalizeCanonicalData(current){
     const access = current.accesses.find((item) => item.name === (zone.accessName || zone.name));
     if (!access?.checked) zone.validated = false;
   });
+  // Migration de l'ancien scénario canonique vers les deux nouvelles cases éditables.
+  const hasLegacyScenario = current.scenario.some((entry) => entry.builtIn && !entry.canonicalKey && LEGACY_CANON_SCENARIO_TITLES.has(entry.title));
+  if (hasLegacyScenario) {
+    current.scenario = current.scenario.filter((entry) => !(entry.builtIn && !entry.canonicalKey && LEGACY_CANON_SCENARIO_TITLES.has(entry.title)));
+  }
   CANON_SCENARIO.forEach((canon) => {
-    const existing = current.scenario.find((entry) => entry.title === canon.title);
-    if (existing) { existing.builtIn = true; }
-    else current.scenario.push({ id:uid(), ...canon, at:new Date().toISOString(), builtIn:true });
+    const existing = current.scenario.find((entry) => entry.canonicalKey === canon.canonicalKey);
+    if (existing) {
+      existing.builtIn = true;
+    } else {
+      current.scenario.push({ id:uid(), ...canon, at:new Date().toISOString(), builtIn:true });
+    }
   });
   let lest = current.merchant.find((item) => item.kind === 'rame-lest' || item.name === 'Lest de Rame de guerre');
   if (!lest) current.merchant.unshift({ id:uid(), name:'Lest de Rame de guerre', effect:'Améliore la Rame de guerre : +1 résistance et +25 dégâts / 30 s. 7 lests disponibles au total. Résistance 8 = 325 dégâts / 30 s.', price:25, stock:7, consumable:false, damagePer30:0, kind:'rame-lest', builtIn:true });
@@ -153,6 +160,7 @@ function loadState(){
 }
 
 let state = loadState();
+let editingScenarioId = null;
 let saveTimer;
 let toastTimer;
 
@@ -466,23 +474,40 @@ function renderZones(){
 
 function renderScenario(){
   const list = $('scenarioList');
-  const canonOrder = new Map(CANON_SCENARIO.map((entry,index) => [entry.title,index]));
+  const canonOrder = new Map(CANON_SCENARIO.map((entry,index) => [entry.canonicalKey,index]));
   const entries = [...state.scenario].sort((a,b) => {
-    if (a.builtIn && b.builtIn) return (canonOrder.get(a.title) ?? 999) - (canonOrder.get(b.title) ?? 999);
+    if (a.builtIn && b.builtIn) return (canonOrder.get(a.canonicalKey) ?? 999) - (canonOrder.get(b.canonicalKey) ?? 999);
     if (a.builtIn) return -1; if (b.builtIn) return 1;
     return new Date(a.at || 0) - new Date(b.at || 0);
   });
-  list.innerHTML = `
-    <article class="scenario-card scenario-pitch"><div class="section-kicker">Pitch de départ</div><h2>Le Disque-Fonte est menacé</h2><p>${esc(SCENARIO_PITCH)}</p></article>
-    <div class="scenario-separator"><span>Scénario découvert</span></div>
-    ${entries.length ? entries.map((entry) => `
+  list.innerHTML = entries.length ? entries.map((entry) => {
+    if (editingScenarioId === entry.id) {
+      return `
+        <article class="scenario-card scenario-editing" data-scenario-card="${entry.id}">
+          <div class="stack scenario-edit-form">
+            <label>Titre<input data-scenario-edit-title value="${esc(entry.title || '')}" /></label>
+            <label>Texte<textarea data-scenario-edit-text rows="7">${esc(entry.text || '')}</textarea></label>
+            <div class="button-row">
+              <button class="btn primary small" type="button" data-action="save-scenario-edit" data-id="${entry.id}">Enregistrer</button>
+              <button class="btn ghost small" type="button" data-action="cancel-scenario-edit" data-id="${entry.id}">Annuler</button>
+            </div>
+          </div>
+        </article>`;
+    }
+    return `
       <article class="scenario-card ${entry.builtIn ? 'canon' : ''}">
-        <div class="item-row"><h2>${esc(entry.title || 'Passage découvert')}</h2>${entry.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-scenario" data-id="${entry.id}">✕</button>`}</div>
+        <div class="item-row">
+          <h2>${esc(entry.title || 'Passage découvert')}</h2>
+          <div class="scenario-card-actions">
+            <button class="btn ghost small" type="button" data-action="edit-scenario" data-id="${entry.id}">Modifier</button>
+            ${entry.builtIn ? '' : `<button class="icon-delete" type="button" data-action="delete-scenario" data-id="${entry.id}" aria-label="Supprimer">✕</button>`}
+          </div>
+        </div>
         <p>${esc(entry.text)}</p>
-        ${entry.builtIn ? '<div class="scenario-date">Déjà découvert</div>' : `<div class="scenario-date">${esc(formatDate(entry.at))}</div>`}
-      </article>`).join('') : '<div class="paper-card empty-state">Le scénario se remplira au fur et à mesure de ce que tu découvres.</div>'}`;
+        ${entry.builtIn ? '<div class="scenario-date">Scénario de campagne</div>' : `<div class="scenario-date">${esc(formatDate(entry.at))}</div>`}
+      </article>`;
+  }).join('') : '<div class="paper-card empty-state">Le scénario se remplira au fur et à mesure de ce que tu découvres.</div>';
 }
-
 function renderMerchant(){
   $('merchantPo').textContent = state.po;
   const list = $('merchantList');
@@ -804,7 +829,21 @@ function handleDelegatedClick(event){
   if (action === 'remove-enemy') { state.combat.enemies = state.combat.enemies.filter((enemy) => enemy.id !== id); persist('Ennemi retiré'); }
   if (action === 'delete-access') { state.accesses = state.accesses.filter((item) => item.id !== id || item.builtIn); persist(); }
   if (action === 'delete-zone') { state.zones = state.zones.filter((item) => item.id !== id); persist(); }
-  if (action === 'delete-scenario') { state.scenario = state.scenario.filter((item) => item.id !== id || item.builtIn); persist(); }
+  if (action === 'edit-scenario') { editingScenarioId = id; renderScenario(); }
+  if (action === 'cancel-scenario-edit') { editingScenarioId = null; renderScenario(); }
+  if (action === 'save-scenario-edit') {
+    const entry = state.scenario.find((item) => item.id === id);
+    const card = actionButton.closest('[data-scenario-card]');
+    if (!entry || !card) return;
+    const title = card.querySelector('[data-scenario-edit-title]')?.value.trim() || '';
+    const text = card.querySelector('[data-scenario-edit-text]')?.value.trim() || '';
+    if (!text) { toast('Le texte du passage ne peut pas être vide'); return; }
+    entry.title = title;
+    entry.text = text;
+    editingScenarioId = null;
+    persist('Passage modifié');
+  }
+  if (action === 'delete-scenario') { state.scenario = state.scenario.filter((item) => item.id !== id || item.builtIn); if (editingScenarioId === id) editingScenarioId = null; persist(); }
   if (action === 'delete-shop') { state.merchant = state.merchant.filter((item) => item.id !== id || item.builtIn); persist(); }
   if (action === 'buy-item') buyItem(id);
   if (action === 'delete-companion') { state.companions = state.companions.filter((item) => item.id !== id); persist(); }

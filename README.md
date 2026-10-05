@@ -45,3 +45,8 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 ### Ordre des rubriques
 - Zones validées au-dessus des zones à valider.
 - Accès obtenus au-dessus des accès à obtenir.
+
+
+## V3.6
+- Scénario remplacé par les deux passages définis par l’utilisatrice.
+- Chaque case du scénario est modifiable individuellement (titre + texte).
