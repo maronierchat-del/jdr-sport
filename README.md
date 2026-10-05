@@ -36,7 +36,12 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 - Tri alphabétique conservé dans chaque rubrique.
 
 
-## V3.4
+## V3.5
 - Rubriques Zones et Accès rendues explicites et séparées.
 - Retour des fonds parchemin sur chaque rubrique.
 - Suppression du cache service worker pour éviter les mélanges de versions.
+
+
+### Ordre des rubriques
+- Zones validées au-dessus des zones à valider.
+- Accès obtenus au-dessus des accès à obtenir.

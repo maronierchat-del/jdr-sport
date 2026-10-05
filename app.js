@@ -430,12 +430,12 @@ function renderAccess(){
     </div>`).join('') : '<div class="empty-state compact">Aucun.</div>';
   list.innerHTML = `
     <section class="paper-card access-group status-group">
-      <div class="group-heading"><div><div class="section-kicker">Accès restreints</div><h2 class="group-title">À obtenir</h2><p class="helper">Accès restreints encore verrouillés.</p></div><strong class="access-count">${pending.length}</strong></div>
-      <div class="check-list">${renderItems(pending)}</div>
-    </section>
-    <section class="paper-card access-group status-group">
       <div class="group-heading"><div><div class="section-kicker">Accès restreints</div><h2 class="group-title">Accès obtenus</h2><p class="helper">Accès restreints déjà débloqués.</p></div><strong class="access-count">${obtained.length}</strong></div>
       <div class="check-list">${renderItems(obtained)}</div>
+    </section>
+    <section class="paper-card access-group status-group">
+      <div class="group-heading"><div><div class="section-kicker">Accès restreints</div><h2 class="group-title">À obtenir</h2><p class="helper">Accès restreints encore verrouillés.</p></div><strong class="access-count">${pending.length}</strong></div>
+      <div class="check-list">${renderItems(pending)}</div>
     </section>`;
 }
 
@@ -455,12 +455,12 @@ function renderZones(){
   }).join('') : '<div class="empty-state compact">Aucune.</div>';
   list.innerHTML = `
     <section class="paper-card access-group status-group">
-      <div class="group-heading"><div><div class="section-kicker">Zones</div><h2 class="group-title">À valider</h2><p class="helper">Zones qu’il reste à terminer.</p></div><strong class="access-count">${pending.length}</strong></div>
-      <div class="check-list">${renderZoneItems(pending)}</div>
-    </section>
-    <section class="paper-card access-group status-group">
       <div class="group-heading"><div><div class="section-kicker">Zones</div><h2 class="group-title">Zones validées</h2><p class="helper">Zones déjà terminées.</p></div><strong class="access-count">${validated.length}</strong></div>
       <div class="check-list">${renderZoneItems(validated)}</div>
+    </section>
+    <section class="paper-card access-group status-group">
+      <div class="group-heading"><div><div class="section-kicker">Zones</div><h2 class="group-title">À valider</h2><p class="helper">Zones qu’il reste à terminer.</p></div><strong class="access-count">${pending.length}</strong></div>
+      <div class="check-list">${renderZoneItems(pending)}</div>
     </section>`;
 }
 
