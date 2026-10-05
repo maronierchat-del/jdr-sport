@@ -18,3 +18,5 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 - Combat séquentiel : un ennemi actif à la fois.
 - Lests de Rame de guerre intégrés au marchand.
 - Pitch et scénario découvert préchargés ; accès libres/restreints préchargés et triés.
+
+V3
