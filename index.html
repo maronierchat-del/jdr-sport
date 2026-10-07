@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#17241b" />
   <meta name="description" content="Carnet de campagne du JDR sportif La Communauté des Abdos." />
-  <link rel="manifest" href="manifest.webmanifest?v=3.8" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.1" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Fitland" />
-  <link rel="stylesheet" href="styles.css?v=3.8" />
+  <link rel="stylesheet" href="styles.css?v=4.1" />
   <title>La Communauté des Abdos — Fitland</title>
 </head>
 <body>
@@ -43,6 +43,12 @@
             <span>PO</span>
             <strong id="homePo">495</strong>
           </div>
+        </div>
+
+        <div class="paper-card position-card home-position-card">
+          <div class="position-icon">📍</div>
+          <div class="position-copy"><span>Position actuelle</span><strong id="homePosition">Plaine du Fitland</strong><small id="homeTravelStatus">Prête à repartir</small></div>
+          <button class="icon-edit position-edit" type="button" id="editHomePositionBtn" aria-label="Modifier la position">✎</button>
         </div>
 
         <div class="quest-card paper-card">
@@ -154,54 +160,79 @@
           <div class="crest">🧭</div>
         </div>
 
-        <div class="route-card paper-card">
+        <div class="paper-card position-card travel-position-card">
+          <div class="position-icon">📍</div>
+          <div class="position-copy"><span>Position actuelle</span><strong id="travelCurrentPosition">Plaine du Fitland</strong><small id="travelPositionHint">Point de départ du prochain trajet</small></div>
+          <button class="icon-edit position-edit" type="button" id="editTravelPositionBtn" aria-label="Modifier la position">✎</button>
+        </div>
+
+        <div id="activeJourneyCard"></div>
+
+        <div class="route-card paper-card" id="travelPlannerCard">
+          <div class="card-heading"><div><div class="section-kicker">Nouveau trajet</div><h2>Préparer le départ</h2></div><span class="die-symbol">🧭</span></div>
           <div class="route-line"><span class="route-dot"></span><span class="route-track"></span><span class="route-dot end"></span></div>
           <div class="form-grid two route-grid">
-            <label>Départ<input id="travelFrom" placeholder="Sud du Fitland" /></label>
-            <label>Destination<input id="travelTo" placeholder="Plaine du Fitland" /></label>
+            <label>Départ<input id="travelFrom" readonly /></label>
+            <label>Destination<input id="travelTo" placeholder="Dévers du Fitland" list="zoneNames" /></label>
           </div>
+          <datalist id="zoneNames"></datalist>
           <label>Distance dans le jeu (km)<input id="travelDistance" type="number" min="0" step="0.1" value="10" inputmode="decimal" /></label>
           <div class="travel-calc" id="travelCalculation">
             <div><span>Effort IRL</span><strong id="travelEffortDistance">10 km</strong></div>
             <div><span>Temps à faire</span><strong id="travelCalculatedTime">50 min</strong></div>
+            <div><span>Rencontres</span><strong id="travelEncounterCount">1</strong></div>
           </div>
-          <p class="helper travel-rule">Conversion : 1 km = 5 min d’effort IRL. Le bonus Éclaireur n’est pas appliqué automatiquement : si tu l’utilises ce jour-là, ajuste toi-même la distance avant de la saisir.</p>
+          <p class="helper travel-rule">Conversion : 1 km = 5 min d’effort IRL.</p>
+          <label class="check-line travel-check"><input id="travelScoutBonus" type="checkbox" /> <span>Bonus d’éclaireur : diviser le temps de trajet par 2</span></label>
           <label class="check-line travel-check"><input id="travelSolo" type="checkbox" checked /> <span>Trajet solo : nombre d’ennemis ÷ 2, arrondi au supérieur</span></label>
           <button class="btn primary full" type="button" id="saveTravelBtn">Enregistrer ce trajet</button>
           <div id="lastTravel" class="last-travel"></div>
-        </div>
-
-        <div class="paper-card dice-card">
-          <div class="card-heading">
-            <div><div class="section-kicker">Rencontre</div><h2>Lancer les dés</h2></div>
-            <span class="die-symbol">⚄</span>
-          </div>
-          <div class="form-grid two compact">
-            <label>Nombre de dés<input id="diceCount" type="number" min="1" max="12" value="1" inputmode="numeric" /></label>
-            <label>Faces<select id="diceSides"><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option><option>20</option><option>100</option></select></label>
-          </div>
-          <button class="btn dice-btn full" type="button" id="rollDiceBtn">🎲 Lancer</button>
-          <div id="diceResults" class="dice-results"></div>
-          <div id="diceTotal" class="dice-total"></div>
-        </div>
-
-        <div class="paper-card">
-          <div class="card-heading"><div><div class="section-kicker">Résultat</div><h2>Rencontre de voyage</h2></div></div>
-          <label>Type de rencontre
-            <select id="encounterType">
-              <option value="none">Rien</option>
-              <option value="combat">Combat</option>
-              <option value="merchant">Marchand</option>
-              <option value="event">Événement</option>
-            </select>
-          </label>
-          <div id="encounterFields" class="encounter-fields"></div>
         </div>
 
         <div class="paper-card" id="travelConsumablesCard">
           <div class="section-kicker">À portée de main</div>
           <h2>Objets utilisables</h2>
           <div id="travelConsumables" class="chip-wrap"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-encounter">
+        <div class="subpage-head encounter-head">
+          <button class="back-btn" type="button" data-go="travel">←</button>
+          <div><div class="eyebrow">Exploration</div><h1>Rencontre</h1></div>
+          <button class="text-btn" type="button" id="resetEncounterBtn">Recommencer</button>
+        </div>
+
+        <div id="encounterTravelContext" class="paper-card encounter-travel-context"></div>
+
+        <div class="paper-card encounter-step" id="encounterStepType">
+          <div class="step-heading"><span class="step-number">1</span><div><div class="section-kicker">7D6</div><h2>Déterminer la rencontre</h2></div></div>
+          <button class="btn dice-btn full" type="button" id="rollEncounterTypeBtn">🎲 Lancer les dés pour déterminer la rencontre</button>
+          <div id="encounterTypeDice" class="dice-results encounter-dice" aria-live="polite"></div>
+          <div id="encounterTypeTotal" class="dice-total"></div>
+          <div id="encounterResultCard" class="encounter-result-slot"></div>
+        </div>
+
+        <div class="paper-card encounter-step locked-step" id="encounterStepQuantity">
+          <div class="step-heading"><span class="step-number">2</span><div><div class="section-kicker">1D6</div><h2>Déterminer la quantité</h2></div></div>
+          <p class="helper" id="quantityHelper">Détermine d’abord la rencontre et confirme que sa zone correspond.</p>
+          <button class="btn dice-btn full" type="button" id="rollEncounterQuantityBtn" disabled>🎲 Lancer la quantité</button>
+          <div id="encounterQuantityDice" class="dice-results encounter-dice" aria-live="polite"></div>
+          <div id="encounterQuantityResult" class="encounter-step-result"></div>
+        </div>
+
+        <div class="paper-card encounter-step locked-step" id="encounterStepContext">
+          <div class="step-heading"><span class="step-number">3</span><div><div class="section-kicker">1D6</div><h2>Déterminer le contexte</h2></div></div>
+          <p class="helper" id="contextHelper">Détermine d’abord la quantité.</p>
+          <button class="btn dice-btn full" type="button" id="rollEncounterContextBtn" disabled>🎲 Lancer le contexte</button>
+          <div id="encounterContextDice" class="dice-results encounter-dice" aria-live="polite"></div>
+          <div id="encounterContextResult" class="encounter-step-result"></div>
+        </div>
+
+        <div class="paper-card encounter-final-card" id="encounterFinalCard" hidden>
+          <div class="section-kicker">Suite</div>
+          <h2>Que fais-tu ?</h2>
+          <div class="button-row vertical-mobile" id="encounterFinalActions"></div>
         </div>
       </section>
 
@@ -212,6 +243,7 @@
         </div>
 
         <div id="combatEnemies" class="enemy-list"></div>
+        <div id="encounterCombatCompletion"></div>
 
         <div class="paper-card attack-card">
           <div class="card-heading"><div><div class="section-kicker">Action</div><h2>Infliger des dégâts</h2></div></div>
@@ -357,10 +389,10 @@
     // mais aucune ressource n'est mise en cache. La sauvegarde localStorage reste intacte.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=3.8', { scope: './' }).catch(() => {});
+        navigator.serviceWorker.register('./sw.js?v=4.1', { scope: './' }).catch(() => {});
       });
     }
   </script>
-  <script src="app.js?v=3.8" defer></script>
+  <script src="app.js?v=4.1" defer></script>
 </body>
 </html>

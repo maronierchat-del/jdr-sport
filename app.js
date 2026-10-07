@@ -1,7 +1,7 @@
 'use strict';
 
 const STORAGE_KEY = 'fitland-jdr-save-v2';
-const APP_VERSION = 6;
+const APP_VERSION = 9;
 
 const FREE_ACCESS_NAMES = [
   'Fontaria','Entrepôts Shaker+','Tique-Couenne','Nosferathon','Omega Beach','Garde Froide',
@@ -20,6 +20,62 @@ const CANON_SCENARIO = [
   { canonicalKey:'plaine', title:'Plaine du Fitland', text:'Pendant le repli vers la Plaine du Fitland, Eleanore rencontre un collègue éclaireur, qui lui confie une mission de repérage du Dévers du Fitland, une zone périphérique du Temple de Tasmina tombé.' }
 ];
 const LEGACY_CANON_SCENARIO_TITLES = new Set(['Prologue — Sud du Fitland','Plaine du Fitland','Mission actuelle — Dévers du Fitland']);
+const ENCOUNTER_TABLE = {
+  7:  { name:'Liquebide', effect:'×10 sur le dé de quantité.', zones:'Fitland, Maaskinland', reward:5, hp:50, quantityMultiplier:10 },
+  8:  { name:'Chardio', effect:'NA', zones:'Toutes', reward:5, hp:50 },
+  9:  { name:'Gnome Zombie', effect:'NA', zones:'Fitland, Maaskinland', reward:10, hp:100 },
+  10: { name:'Acromide', effect:'NA', zones:'Fitland, Maaskinland', reward:10, hp:100 },
+  11: { name:'Selfine', effect:'Fermez les yeux.', zones:'Fitland, Maaskinland', reward:10, hp:100 },
+  12: { name:'Gebeleau', effect:'NA', zones:'Toutes', reward:10, hp:100 },
+  13: { name:'Fitnéant', effect:'NA', zones:'Fitland, Maaskinland', reward:10, hp:100 },
+  14: { name:'Gnome zombie', effect:'NA', zones:'Maaskinland', reward:10, hp:100 },
+  15: { name:'Trollympien', effect:'Ajoutez +2 au jet de contexte.', zones:'Fitland', reward:150, hp:1500, contextBonus:2 },
+  16: { name:'Plantosaure', effect:'NA', zones:'Fitland, Maaskinland, Anabolie', reward:15, hp:150 },
+  17: { name:'Zomfit', effect:'NA', zones:'Fitland, Anabolie', reward:15, hp:150 },
+  18: { name:'Squatosaure', effect:'NA', zones:'Fitland, Pays des Khôls, Anabolie', reward:20, hp:200 },
+  19: { name:'Zumbhaka', effect:'Dansez.', zones:'Fitland, Anabolie', reward:30, hp:300 },
+  20: { name:'Pillard Martial', effect:'NA', zones:'Toutes', reward:40, hp:400 },
+  21: { name:'Mesossé', effect:'NA', zones:'Fitland, Anabolie', reward:50, hp:500 },
+  22: { name:'Guerrier Khol', effect:'NA', zones:'Toutes', reward:50, hp:500 },
+  23: { name:'Orcfit', effect:'Posing Culturiste avant chaque attaque.', zones:'Fitland', reward:50, hp:500 },
+  24: { name:'Nosferathonien', effect:'NA', zones:'Toutes', reward:50, hp:500 },
+  25: { name:'Transpinia', effect:'NA', zones:'Toutes', reward:70, hp:700 },
+  26: { name:'Permabulker', effect:'NA', zones:'Toutes', reward:100, hp:1000 },
+  27: { name:'Chathlète', effect:'NA', zones:'Fitland', reward:100, hp:1000 },
+  28: { name:'Powerchat', effect:'NA', zones:'Fitland', reward:150, hp:1500 },
+  29: { name:'Abomination', effect:'Ne lancez pas le dé de quantité.', zones:'Fitland, Maaskinland', reward:300, hp:3000, skipQuantity:true },
+  30: { name:'Bulkoeil', effect:'Ne lancez pas le dé de quantité.', zones:'Toutes', reward:300, hp:3000, skipQuantity:true },
+  31: { name:'Chose', effect:'Ne lancez pas le dé de quantité.', zones:'Anabolie', reward:300, hp:3000, skipQuantity:true },
+  32: { name:'Hydrocoolique', effect:'Ne lancez pas le dé de quantité.', zones:'Falaises Olympiques, Omega Beach', reward:900, hp:9000, skipQuantity:true },
+  33: { name:'Nécrolifter', effect:'Ne lancez pas le dé de quantité.', zones:'Toutes', reward:300, hp:3000, skipQuantity:true },
+  34: { name:'Marchand Itinérant', effect:'Inoffensif. Commercez.', zones:'Toutes sauf Fitland', reward:null, hp:null, kind:'merchant' },
+  35: { name:'Gardes du Fitland', effect:'Perdez tous vos PO ou affrontez-les. Ne lancez pas le dé de quantité.', zones:'Fitland', reward:1000, hp:10000, skipQuantity:true },
+  36: { name:'Bulker Fruité', effect:'Inoffensif. Obtenez un shaker de votre choix.', zones:'Toutes', reward:400, hp:4000 },
+  37: { name:'Chevalier Templiométrique', effect:'Inoffensif. Aucune rencontre jusqu’à votre prochaine destination.', zones:'Toutes', reward:300, hp:3000 },
+  38: { name:'Elfit', effect:'Inoffensif. Échangez un objet contre un bijou de mage.', zones:'Toutes', reward:100, hp:1000 },
+  39: { name:'Amazone', effect:'Inoffensif. Échangez un objet contre un objet féerique de votre choix.', zones:'Toutes', reward:100, hp:1000 },
+  40: { name:'Bibilithe', effect:'Perdez un objet et tous vos PO ou affrontez-le.', zones:'Toutes', reward:200, hp:2000 },
+  41: { name:'Clan Nazcool', effect:'Affrontez-les ou l’Orienteur obsédé ne vous poursuit plus. Ne lancez pas le dé de quantité.', zones:'Toutes', reward:900, hp:9000, skipQuantity:true },
+  42: { name:'Orienteur obsédé', effect:'L’Orienteur obsédé vous poursuit : affrontez-le à chaque prochaine rencontre en supplément. Ne lancez pas le dé de quantité.', zones:'Toutes', reward:0, hp:400, skipQuantity:true }
+};
+
+const ENCOUNTER_CONTEXTS = {
+  1: { context:'Vous êtes piégé !', exercise:'10 Burpees par Quantité' },
+  2: { context:'Une embuscade !', exercise:'Multipliez par 2 les durées d’utilisation de vos objets' },
+  3: { context:'Ils arrivent !', exercise:'50 Jumping Jacks' },
+  4: { context:'Ils ne vous échapperont pas.', exercise:'20 Jumping Jacks' },
+  5: { context:'Ils sont à votre merci.', exercise:'Rien' },
+  6: { context:'Ils n’ont rien vu.', exercise:'Vous pouvez éviter la Rencontre.' }
+};
+
+function freshEncounterState(){
+  return {
+    typeRolls: [], total: null, resultNumber: null, zoneConfirmed: false, passed: false,
+    quantityRaw: null, quantityBeforeSolo: null, quantityFinal: null,
+    contextRaw: null, contextFinal: null,
+    travelId: null, combatStarted: false, combatEnemyIds: []
+  };
+}
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
@@ -59,8 +115,11 @@ function makeDefaultState(){
       { id: uid(), at: new Date().toISOString(), text: 'La Plaine du Fitland est validée. 6 Orcfits vaincus, +300 PO.' }
     ],
     combat: { enemies: [] },
+    currentLocation: 'Plaine du Fitland',
+    activeTravel: null,
     lastTravel: null,
     lastDice: null,
+    encounter: freshEncounterState(),
     ui: { lastView: 'home' }
   };
 }
@@ -146,6 +205,9 @@ function mergeState(saved){
     companions: Array.isArray(saved.companions) ? saved.companions : base.companions,
     journal: Array.isArray(saved.journal) ? saved.journal : base.journal,
     combat: { enemies: Array.isArray(saved.combat?.enemies) ? saved.combat.enemies : [] },
+    currentLocation: typeof saved.currentLocation === 'string' && saved.currentLocation.trim() ? saved.currentLocation.trim() : base.currentLocation,
+    activeTravel: saved.activeTravel && typeof saved.activeTravel === 'object' ? saved.activeTravel : null,
+    encounter: { ...base.encounter, ...(saved.encounter || {}), combatEnemyIds: Array.isArray(saved.encounter?.combatEnemyIds) ? saved.encounter.combatEnemyIds : [] },
     ui: { ...base.ui, ...(saved.ui || {}) }
   };
   return normalizeCanonicalData(merged);
@@ -206,7 +268,7 @@ function go(view){
   if (!target) return;
   $$('.view').forEach((section) => section.classList.remove('active'));
   target.classList.add('active');
-  const rootView = ['access','zones','scenario','merchant','companions','journal','backup'].includes(view) ? 'more' : view;
+  const rootView = view === 'encounter' ? 'travel' : (['access','zones','scenario','merchant','companions','journal','backup'].includes(view) ? 'more' : view);
   $$('.nav-btn').forEach((button) => button.classList.toggle('active', button.dataset.view === rootView));
   state.ui.lastView = view;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
@@ -224,12 +286,136 @@ function setValueUnlessFocused(id, value){
   if (node && document.activeElement !== node) node.value = value ?? '';
 }
 
+
+function findZoneByName(name){
+  const target = String(name || '').trim().toLocaleLowerCase('fr');
+  if (!target) return null;
+  return state.zones.find((zone) => zone.name.trim().toLocaleLowerCase('fr') === target) || null;
+}
+
+function isZoneUnlocked(zone){
+  if (!zone?.requiresAccess) return true;
+  const access = state.accesses.find((item) => item.name === (zone.accessName || zone.name));
+  return !!access?.checked;
+}
+
+function editCurrentLocation(){
+  if (state.activeTravel && ['in_progress','encounter'].includes(state.activeTravel.status)) {
+    return toast('Termine d’abord le trajet en cours');
+  }
+  const value = prompt('Position actuelle d’Eleanore', state.currentLocation || '');
+  if (value == null) return;
+  const next = value.trim();
+  if (!next) return toast('La position ne peut pas être vide');
+  state.currentLocation = next;
+  if (state.activeTravel?.status === 'arrived') state.activeTravel = null;
+  logEvent(`Position d’Eleanore : ${next}.`);
+  persist('Position mise à jour');
+}
+
+function validateArrivalZone(){
+  const trip = state.activeTravel;
+  if (!trip || trip.status !== 'arrived') return;
+  const zone = findZoneByName(trip.to);
+  if (!zone) return toast('Cette destination n’est pas dans la liste des zones');
+  if (!isZoneUnlocked(zone)) return toast(`Accès requis : ${zone.accessName || zone.name}`);
+  if (zone.validated) return toast('Cette zone est déjà validée');
+  zone.validated = true;
+  logEvent(`${zone.name} validée ✅ depuis l’arrivée du trajet.`);
+  persist('Zone validée !');
+}
+
+function completeActiveTravelArrival(message, nextView = 'travel'){
+  const trip = state.activeTravel;
+  if (message) logEvent(message);
+  if (trip && trip.status === 'encounter') {
+    trip.status = 'arrived';
+    trip.encounterCompleted = true;
+    trip.arrivedAt = new Date().toISOString();
+    state.currentLocation = trip.to;
+    state.lastTravel = { ...trip };
+    logEvent(`Arrivée à ${trip.to}. Eleanore est maintenant sur place.`);
+  }
+  resetEncounter({ render:false });
+  if ($('travelTo')) $('travelTo').value = '';
+  persist('Arrivée enregistrée', { render:false });
+  go(nextView);
+}
+
+function validateActiveTravel(){
+  const trip = state.activeTravel;
+  if (!trip || trip.status !== 'in_progress') return;
+  trip.effortCompletedAt = new Date().toISOString();
+  logEvent(`Effort IRL terminé pour ${trip.from} → ${trip.to}.`);
+  if ((Number(trip.encounterCount) || 0) < 1) {
+    trip.status = 'encounter';
+    completeActiveTravelArrival('Trajet terminé : moins de 6 km, aucune rencontre générée.');
+    return;
+  }
+  trip.status = 'encounter';
+  state.encounter = freshEncounterState();
+  state.encounter.travelId = trip.id;
+  persist('Trajet validé — rencontre à résoudre', { render:false });
+  go('encounter');
+}
+
+function renderJourneyCard(){
+  const wrap = $('activeJourneyCard');
+  if (!wrap) return;
+  const trip = state.activeTravel;
+  if (!trip) { wrap.innerHTML = ''; return; }
+  const stats = `<div class="journey-stats"><div><span>Distance</span><strong>${fmtNumber(trip.gameDistance)} km</strong></div><div><span>Effort IRL</span><strong>${fmtNumber(trip.effortDistance)} km</strong></div><div><span>Temps</span><strong>${fmtNumber(trip.duration)} min</strong>${trip.scoutBonus ? '<small>Bonus Éclaireur ×½</small>' : ''}</div></div>`;
+  if (trip.status === 'in_progress') {
+    wrap.innerHTML = `<section class="paper-card journey-card"><div class="journey-head"><div><div class="section-kicker">Trajet enregistré</div><h2>Effort en cours</h2></div><span class="journey-badge">En route</span></div><div class="journey-route">${esc(trip.from)} → ${esc(trip.to)}</div>${stats}<p class="journey-progress-note">Eleanore est encore à <strong>${esc(trip.from)}</strong>. Quand l’effort IRL est réellement terminé, valide le trajet : la rencontre sera alors générée.</p><button class="btn primary full" type="button" id="validateTravelProgressBtn">✓ Effort IRL terminé — valider le trajet</button></section>`;
+    $('validateTravelProgressBtn')?.addEventListener('click', validateActiveTravel);
+    return;
+  }
+  if (trip.status === 'encounter') {
+    const inCombat = !!state.encounter?.combatStarted;
+    wrap.innerHTML = `<section class="paper-card journey-card"><div class="journey-head"><div><div class="section-kicker">Trajet validé</div><h2>Rencontre en cours</h2></div><span class="journey-badge">Avant l’arrivée</span></div><div class="journey-route">${esc(trip.from)} → ${esc(trip.to)}</div>${stats}<p class="journey-progress-note">L’effort IRL est terminé. Eleanore n’arrivera à <strong>${esc(trip.to)}</strong> qu’une fois la rencontre résolue.</p><button class="btn primary full" type="button" id="resumeTravelEncounterBtn">${inCombat ? '⚔ Reprendre le combat' : '🎲 Reprendre la rencontre'}</button></section>`;
+    $('resumeTravelEncounterBtn')?.addEventListener('click', () => go(inCombat ? 'combat' : 'encounter'));
+    return;
+  }
+  if (trip.status === 'arrived') {
+    const zone = findZoneByName(trip.to);
+    let zonePart = '<p class="helper">Cette destination n’est pas répertoriée comme zone.</p>';
+    if (zone) {
+      if (zone.validated) zonePart = `<div class="arrival-zone-status"><strong>✅ ${esc(zone.name)} est validée</strong><button class="btn ghost small" type="button" data-go="zones">Voir les zones</button></div>`;
+      else if (!isZoneUnlocked(zone)) zonePart = `<div class="arrival-zone-status"><strong>🔒 ${esc(zone.name)} : accès requis</strong><button class="btn ghost small" type="button" data-go="access">Voir les accès</button></div>`;
+      else zonePart = `<div class="arrival-zone-status"><strong>Zone non validée</strong><button class="btn primary" type="button" id="validateArrivalZoneBtn">✓ Valider ${esc(zone.name)}</button></div>`;
+    }
+    wrap.innerHTML = `<section class="paper-card journey-card arrival-card"><div class="journey-head"><div><div class="section-kicker">Destination atteinte</div><h2>Arrivée à ${esc(trip.to)}</h2></div><span class="journey-badge">Arrivée</span></div><p class="journey-progress-note">📍 Eleanore est maintenant à <strong>${esc(trip.to)}</strong>. Tu peux valider la zone puis préparer le trajet suivant.</p><div class="arrival-zone-box"><div class="section-kicker">Validation de la zone</div>${zonePart}</div></section>`;
+    $('validateArrivalZoneBtn')?.addEventListener('click', validateArrivalZone);
+  }
+}
+
+function renderEncounterCombatCompletion(){
+  const wrap = $('encounterCombatCompletion');
+  if (!wrap) return;
+  const e = state.encounter;
+  const trip = state.activeTravel;
+  if (!e?.combatStarted || !e.combatEnemyIds?.length) { wrap.innerHTML = ''; return; }
+  const resolved = e.combatEnemyIds.every((id) => {
+    const enemy = state.combat.enemies.find((item) => item.id === id);
+    return !enemy || enemy.defeated;
+  });
+  if (!resolved) {
+    wrap.innerHTML = `<section class="paper-card combat-arrival-card"><div class="section-kicker">Rencontre de trajet</div><p class="body-copy">Le trajet vers <strong>${esc(trip?.to || 'la destination')}</strong> sera terminé quand ces ennemis seront vaincus.</p></section>`;
+    return;
+  }
+  wrap.innerHTML = `<section class="paper-card combat-arrival-card"><div class="section-kicker">Rencontre terminée</div><h2>La route est libre</h2><p class="body-copy">Le combat de la rencontre est résolu. Eleanore peut maintenant arriver à <strong>${esc(trip?.to || 'sa destination')}</strong>.</p><button class="btn primary full" type="button" id="finishCombatEncounterBtn">✓ Terminer la rencontre et arriver</button></section>`;
+  $('finishCombatEncounterBtn')?.addEventListener('click', () => finishEncounter('Rencontre terminée après le combat.'));
+}
+
 function renderHome(){
   $('homeName').textContent = state.character.name;
   $('homeClass').textContent = `${state.character.className} · Niveau ${state.character.level}`;
   $('homePo').textContent = state.po;
   $('homeQuest').textContent = state.character.quest || 'Aucune quête IRL définie';
   $('homeQuestMeta').textContent = state.character.special ? `Capacité : ${state.character.special}` : 'Objectif d’aventure personnel';
+  $('homePosition').textContent = state.currentLocation || 'Position inconnue';
+  const trip = state.activeTravel;
+  $('homeTravelStatus').textContent = trip?.status === 'in_progress' ? `En route vers ${trip.to} · effort IRL à terminer` : trip?.status === 'encounter' ? `Vers ${trip.to} · rencontre en cours` : 'Prête à repartir';
 
   const alive = state.combat.enemies.filter((enemy) => !enemy.defeated).length;
   $('homeCombatText').textContent = alive ? `${alive} ennemi${alive > 1 ? 's' : ''} encore actif${alive > 1 ? 's' : ''}` : 'Aucun ennemi actif';
@@ -273,8 +459,10 @@ function activeEnemy(){ return state.combat.enemies.find((enemy) => !enemy.defea
 function travelMath(){
   const gameDistance = Math.max(0, Number($('travelDistance')?.value) || 0);
   const effortDistance = gameDistance;
-  const duration = effortDistance * 5;
-  return { gameDistance, effortDistance, duration };
+  const scoutBonus = !!$('travelScoutBonus')?.checked;
+  const baseDuration = effortDistance * 5;
+  const duration = scoutBonus ? baseDuration / 2 : baseDuration;
+  return { gameDistance, effortDistance, duration, baseDuration, scoutBonus };
 }
 
 function fmtNumber(value){ return Number.isInteger(value) ? String(value) : Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2}); }
@@ -284,7 +472,9 @@ function updateTravelCalculation(){
   const calc = travelMath();
   $('travelEffortDistance').textContent = `${fmtNumber(calc.effortDistance)} km`;
   $('travelCalculatedTime').textContent = `${fmtNumber(calc.duration)} min`;
-  return calc;
+  const encounterCount = Math.floor(calc.gameDistance / 6);
+  if ($('travelEncounterCount')) $('travelEncounterCount').textContent = String(encounterCount);
+  return { ...calc, encounterCount };
 }
 
 function renderEquipment(){
@@ -317,17 +507,30 @@ function renderEquipment(){
 }
 
 function renderTravel(){
-  const t = state.lastTravel;
-  if (t?.gameDistance != null && document.activeElement !== $('travelDistance')) $('travelDistance').value = t.gameDistance;
-  const calc = updateTravelCalculation();
-  $('lastTravel').innerHTML = t ? `Dernier trajet : <strong>${esc(t.from || '?')} → ${esc(t.to || '?')}</strong>${t.gameDistance != null ? ` · ${fmtNumber(t.gameDistance)} km dans le jeu` : ''}${t.effortDistance != null ? ` · ${fmtNumber(t.effortDistance)} km IRL` : ''}${t.duration ? ` · ${fmtNumber(t.duration)} min` : ''}` : '';
-  if (state.lastDice?.rolls?.length) {
-    $('diceResults').innerHTML = state.lastDice.rolls.map((roll) => `<div class="die">${roll}</div>`).join('');
-    $('diceTotal').textContent = `Total : ${state.lastDice.rolls.reduce((a,b) => a+b, 0)}`;
+  const trip = state.activeTravel;
+  const locked = !!trip && ['in_progress','encounter'].includes(trip.status);
+  $('travelCurrentPosition').textContent = state.currentLocation || 'Position inconnue';
+  $('travelPositionHint').textContent = trip?.status === 'in_progress' ? `En route vers ${trip.to}` : trip?.status === 'encounter' ? `Rencontre avant l’arrivée à ${trip.to}` : 'Point de départ du prochain trajet';
+  $('zoneNames').innerHTML = [...state.zones].sort((a,b) => a.name.localeCompare(b.name,'fr')).map((zone) => `<option value="${esc(zone.name)}"></option>`).join('');
+  $('travelFrom').value = locked ? trip.from : (state.currentLocation || '');
+  if (locked) {
+    $('travelTo').value = trip.to;
+    $('travelDistance').value = trip.gameDistance;
+    $('travelScoutBonus').checked = !!trip.scoutBonus;
+    $('travelSolo').checked = !!trip.solo;
   } else {
-    $('diceResults').innerHTML = '';
-    $('diceTotal').textContent = '';
+    $('travelScoutBonus').checked = false;
   }
+  $('travelTo').disabled = locked;
+  $('travelDistance').disabled = locked;
+  $('travelScoutBonus').disabled = locked;
+  $('travelSolo').disabled = locked;
+  $('saveTravelBtn').disabled = locked;
+  $('travelPlannerCard').classList.toggle('is-locked', locked);
+  updateTravelCalculation();
+  const t = state.lastTravel;
+  $('lastTravel').innerHTML = t ? `Dernier trajet : <strong>${esc(t.from || '?')} → ${esc(t.to || '?')}</strong>${t.gameDistance != null ? ` · ${fmtNumber(t.gameDistance)} km` : ''}` : '';
+  renderJourneyCard();
   renderTravelConsumables();
 }
 
@@ -339,50 +542,6 @@ function renderTravelConsumables(){
   wrap.innerHTML = items.map((item) => `<button class="chip-btn" type="button" data-action="use-equipment" data-id="${item.id}">${esc(item.name)} ×${item.qty}</button>`).join('');
 }
 
-function renderEncounterFields(){
-  const type = $('encounterType').value;
-  const target = $('encounterFields');
-  if (type === 'combat') {
-    target.innerHTML = `
-      <div class="stack">
-        <div class="form-grid two">
-          <label>Ennemi<input id="encName" /></label>
-          <label>Nombre brut<input id="encCount" type="number" min="1" value="1" inputmode="numeric" /></label>
-          <label>PV chacun<input id="encHp" type="number" min="1" value="500" inputmode="numeric" /></label>
-          <label>Récompense PO chacun<input id="encReward" type="number" min="0" value="0" inputmode="numeric" /></label>
-        </div>
-        <div class="pill" id="soloCountLabel"></div>
-        <button class="btn primary full" type="button" id="sendEncounterBtn">Envoyer au combat</button>
-      </div>`;
-    $('encCount').addEventListener('input', updateSoloCount);
-    $('travelSolo').addEventListener('change', updateSoloCount, { once: true });
-    $('sendEncounterBtn').addEventListener('click', sendEncounterToCombat);
-    updateSoloCount();
-  } else if (type === 'merchant') {
-    target.innerHTML = '<p class="body-copy">Tu as croisé un marchand pendant le trajet.</p><button class="btn primary full" type="button" id="openMerchantBtn">Ouvrir l’échoppe</button>';
-    $('openMerchantBtn').addEventListener('click', () => { logEvent('Marchand rencontré pendant un trajet.'); persist(); go('merchant'); });
-  } else if (type === 'event') {
-    target.innerHTML = '<div class="stack"><label>Événement<textarea id="eventText" rows="4"></textarea></label><button class="btn primary" type="button" id="saveEventBtn">Ajouter au journal</button></div>';
-    $('saveEventBtn').addEventListener('click', () => {
-      const text = $('eventText').value.trim();
-      if (!text) return toast('Décris l’événement');
-      logEvent(`Événement de trajet : ${text}`);
-      persist('Événement enregistré');
-      $('eventText').value = '';
-    });
-  } else {
-    target.innerHTML = '<div class="empty-state">Aucune rencontre : la route reste tranquille.</div>';
-  }
-}
-
-function updateSoloCount(){
-  const label = $('soloCountLabel');
-  const countInput = $('encCount');
-  if (!label || !countInput) return;
-  const raw = Math.max(1, Number(countInput.value) || 1);
-  const solo = $('travelSolo').checked;
-  label.textContent = solo ? `Trajet solo : ${raw} → ${Math.ceil(raw / 2)} ennemi${Math.ceil(raw / 2) > 1 ? 's' : ''}` : `${raw} ennemi${raw > 1 ? 's' : ''}`;
-}
 
 function renderCombat(){
   const list = $('combatEnemies');
@@ -411,6 +570,7 @@ function renderCombat(){
   $('manualDamageBtn').disabled = !current;
   renderDamageWeapons();
   renderCombatConsumables();
+  renderEncounterCombatCompletion();
 }
 
 function renderDamageWeapons(){
@@ -546,6 +706,7 @@ function renderAll(){
   renderCharacter();
   renderEquipment();
   renderTravel();
+  renderEncounter();
   renderCombat();
   renderAccess();
   renderZones();
@@ -592,14 +753,23 @@ function useEquipment(id){
 }
 
 function saveTravel(){
+  if (state.activeTravel && ['in_progress','encounter'].includes(state.activeTravel.status)) return toast('Un trajet est déjà en cours');
   const calc = updateTravelCalculation() || travelMath();
+  const from = (state.currentLocation || $('travelFrom').value || '').trim();
+  const to = $('travelTo').value.trim();
+  if (!from) return toast('Indique d’abord la position actuelle');
+  if (!to) return toast('Choisis une destination');
+  if (from.toLocaleLowerCase('fr') === to.toLocaleLowerCase('fr')) return toast('La destination doit être différente du départ');
+  if (calc.gameDistance <= 0) return toast('Indique une distance supérieure à 0');
   const travel = {
-    from: $('travelFrom').value.trim(), to: $('travelTo').value.trim(),
-    gameDistance: calc.gameDistance, effortDistance: calc.effortDistance, duration: calc.duration,
-    solo: $('travelSolo').checked, at: new Date().toISOString()
+    id: uid(), from, to,
+    gameDistance: calc.gameDistance, effortDistance: calc.effortDistance, duration: calc.duration, baseDuration: calc.baseDuration, encounterCount: calc.encounterCount,
+    scoutBonus: calc.scoutBonus, solo: $('travelSolo').checked, status:'in_progress', startedAt:new Date().toISOString(), encounterCompleted:false
   };
-  state.lastTravel = travel;
-  logEvent(`Trajet ${travel.from || '?'} → ${travel.to || '?'} · ${fmtNumber(travel.gameDistance)} km dans le jeu · ${fmtNumber(travel.effortDistance)} km IRL · ${fmtNumber(travel.duration)} min.`);
+  state.activeTravel = travel;
+  state.lastTravel = { ...travel };
+  state.encounter = freshEncounterState();
+  logEvent(`Trajet enregistré : ${travel.from} → ${travel.to} · ${fmtNumber(travel.gameDistance)} km · ${fmtNumber(travel.duration)} min d’effort${travel.scoutBonus ? ' (bonus Éclaireur ×½)' : ''}.`);
   persist('Trajet enregistré');
 }
 
@@ -613,36 +783,273 @@ function secureDie(sides){
   return Math.floor(Math.random() * sides) + 1;
 }
 
-function rollDice(){
-  const count = Math.min(12, Math.max(1, Number($('diceCount').value) || 1));
-  const sides = Math.max(2, Number($('diceSides').value) || 6);
-  const rolls = Array.from({ length: count }, () => secureDie(sides));
-  state.lastDice = { rolls, sides, at: new Date().toISOString() };
-  logEvent(`Dés de rencontre : ${rolls.join(' + ')} (d${sides}) = ${rolls.reduce((a,b) => a+b, 0)}.`);
-  persist();
+let diceRolling = false;
+
+function sleep(ms){
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function addEnemyInstances(name, count, hp, reward){
-  for (let i = 1; i <= count; i += 1) {
-    state.combat.enemies.push({
-      id: uid(), name: count > 1 ? `${name} ${i}` : name,
-      maxHp: hp, hp, reward, defeated: false, rewarded: false
+async function animateDice({ container, button, count, sides = 6, rolls, rollingText = '🎲 Ça roule…' }){
+  if (diceRolling) return false;
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  diceRolling = true;
+  if (button) {
+    button.disabled = true;
+    button.dataset.originalText = button.textContent;
+    button.classList.add('is-rolling');
+    button.textContent = rollingText;
+  }
+  container.setAttribute('aria-busy', 'true');
+  if (reduceMotion) {
+    container.innerHTML = rolls.map((roll) => `<div class="die">${roll}</div>`).join('');
+  } else {
+    container.innerHTML = Array.from({ length: count }, (_, index) => `<div class="die rolling" style="--die-delay:${index * 45}ms">${secureDie(sides)}</div>`).join('');
+    const dice = Array.from(container.querySelectorAll('.die'));
+    const ticker = setInterval(() => {
+      dice.forEach((die) => { if (die.classList.contains('rolling')) die.textContent = secureDie(sides); });
+    }, 70);
+    await sleep(480);
+    for (let index = 0; index < dice.length; index += 1) {
+      const die = dice[index];
+      die.textContent = rolls[index];
+      die.classList.remove('rolling');
+      die.classList.add('landed');
+      await sleep(count > 2 ? 70 : 110);
+    }
+    clearInterval(ticker);
+  }
+  container.removeAttribute('aria-busy');
+  if (button) {
+    button.disabled = false;
+    button.classList.remove('is-rolling');
+    button.textContent = button.dataset.originalText || '🎲 Lancer';
+    delete button.dataset.originalText;
+  }
+  diceRolling = false;
+  return true;
+}
+
+function encounterDefinition(){
+  return state.encounter?.resultNumber ? ENCOUNTER_TABLE[state.encounter.resultNumber] : null;
+}
+
+function resetEncounter({ render = true } = {}){
+  state.encounter = freshEncounterState();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  if (render) renderEncounter();
+}
+
+function renderEncounter(){
+  const e = state.encounter || (state.encounter = freshEncounterState());
+  const def = encounterDefinition();
+  const typeDice = $('encounterTypeDice');
+  if (!typeDice) return;
+  const trip = state.activeTravel;
+  const context = $('encounterTravelContext');
+  if (context) context.innerHTML = trip?.status === 'encounter' ? `<div class="section-kicker">Trajet en cours</div><strong>${esc(trip.from)} → ${esc(trip.to)}</strong><p class="helper">L’effort IRL est validé. L’arrivée sera enregistrée quand cette rencontre sera terminée.</p>` : '';
+
+  typeDice.innerHTML = e.typeRolls?.length ? e.typeRolls.map((roll) => `<div class="die">${roll}</div>`).join('') : '';
+  $('encounterTypeTotal').textContent = e.total ? `Total : ${e.total}` : '';
+
+  const resultSlot = $('encounterResultCard');
+  if (!def) {
+    resultSlot.innerHTML = '<div class="empty-state compact">Lance 7D6 : le total désignera automatiquement la rencontre.</div>';
+  } else {
+    const effect = def.effect && def.effect !== 'NA' ? `<div class="encounter-effect"><span>Effet immédiat</span><strong>${esc(def.effect)}</strong></div>` : '';
+    resultSlot.innerHTML = `
+      <article class="encounter-result-card">
+        <div class="encounter-result-top"><div><div class="section-kicker">Résultat ${e.resultNumber}</div><h2>${esc(def.name)}</h2></div><span class="encounter-number">${e.resultNumber}</span></div>
+        <div class="encounter-meta">
+          <div class="zone-meta"><span>Zone</span><strong>${esc(def.zones)}</strong></div>
+          ${def.hp == null ? '' : `<div><span>PV</span><strong>${def.hp}</strong></div>`}
+          ${def.reward == null ? '' : `<div><span>Récomp.</span><strong>${def.reward} PO</strong></div>`}
+        </div>
+        ${effect}
+        ${e.zoneConfirmed ? '<div class="zone-confirmed">✓ Zone confirmée</div>' : `<div class="zone-choice"><p>Vérifie la zone indiquée ci-dessus.</p><div class="button-row"><button class="btn primary" type="button" id="confirmEncounterZoneBtn">✓ La zone correspond</button><button class="btn ghost" type="button" id="passEncounterZoneBtn">↷ Mauvaise zone : passer</button></div></div>`}
+      </article>`;
+    $('confirmEncounterZoneBtn')?.addEventListener('click', confirmEncounterZone);
+    $('passEncounterZoneBtn')?.addEventListener('click', passEncounterForZone);
+  }
+
+  const quantityButton = $('rollEncounterQuantityBtn');
+  const quantityStep = $('encounterStepQuantity');
+  const quantityDice = $('encounterQuantityDice');
+  const quantityResult = $('encounterQuantityResult');
+  quantityDice.innerHTML = e.quantityRaw ? `<div class="die">${e.quantityRaw}</div>` : '';
+
+  const readyForQuantity = Boolean(def && e.zoneConfirmed);
+  quantityStep.classList.toggle('locked-step', !readyForQuantity);
+  if (!readyForQuantity) {
+    quantityButton.disabled = true;
+    $('quantityHelper').textContent = 'Détermine d’abord la rencontre et confirme que sa zone correspond.';
+    quantityResult.innerHTML = '';
+  } else if (def.skipQuantity) {
+    quantityButton.disabled = true;
+    $('quantityHelper').textContent = 'Cette rencontre indique de ne pas lancer le dé de quantité.';
+    quantityResult.innerHTML = '<div class="rule-result"><strong>Quantité : 1</strong><span>Pas de jet de quantité.</span></div>';
+  } else {
+    quantityButton.disabled = false;
+    $('quantityHelper').textContent = 'Lance 1D6. Le trajet solo divise ensuite la quantité par 2, arrondie au supérieur.';
+    if (e.quantityRaw) {
+      let chain = `${e.quantityRaw}`;
+      if (def.quantityMultiplier) chain += ` × ${def.quantityMultiplier} = ${e.quantityBeforeSolo}`;
+      const solo = state.activeTravel?.status === 'encounter' ? !!state.activeTravel.solo : !!$('travelSolo')?.checked;
+      if (solo) chain += ` → solo : ${e.quantityFinal}`;
+      quantityResult.innerHTML = `<div class="rule-result"><strong>Quantité finale : ${e.quantityFinal}</strong><span>${esc(chain)}</span></div>`;
+    } else quantityResult.innerHTML = '';
+  }
+
+  const quantityResolved = readyForQuantity && (def.skipQuantity || Boolean(e.quantityRaw));
+  const contextStep = $('encounterStepContext');
+  const contextButton = $('rollEncounterContextBtn');
+  contextStep.classList.toggle('locked-step', !quantityResolved);
+  contextButton.disabled = !quantityResolved;
+  $('contextHelper').textContent = quantityResolved ? (def.contextBonus ? `Lance 1D6. ${def.name} ajoute +${def.contextBonus} au résultat (maximum 6 pour cette table).` : 'Lance 1D6 pour établir le contexte de la rencontre.') : 'Détermine d’abord la quantité.';
+  $('encounterContextDice').innerHTML = e.contextRaw ? `<div class="die">${e.contextRaw}</div>` : '';
+  if (e.contextFinal) {
+    const ctx = ENCOUNTER_CONTEXTS[e.contextFinal];
+    const bonusText = def.contextBonus ? `<span>Dé ${e.contextRaw} + ${def.contextBonus} → résultat ${e.contextFinal}</span>` : '';
+    $('encounterContextResult').innerHTML = `<div class="context-result"><div><span>Contexte</span><strong>${esc(ctx.context)}</strong></div><div><span>Exercice / malus</span><strong>${esc(ctx.exercise)}</strong></div>${bonusText}</div>`;
+  } else $('encounterContextResult').innerHTML = '';
+
+  const finalCard = $('encounterFinalCard');
+  const finalActions = $('encounterFinalActions');
+  if (def && e.zoneConfirmed && quantityResolved && e.contextFinal) {
+    finalCard.hidden = false;
+    const actions = [];
+    if (e.combatStarted) {
+      actions.push('<button class="btn primary" type="button" id="returnEncounterCombatBtn">⚔ Reprendre le combat</button>');
+    } else {
+      if (e.contextFinal === 6) actions.push('<button class="btn ghost" type="button" id="avoidEncounterBtn">👀 Éviter la rencontre</button>');
+      if (def.kind === 'merchant') actions.push('<button class="btn primary" type="button" id="openEncounterMerchantBtn">🏕️ Ouvrir l’échoppe</button>');
+      if (def.hp != null && def.hp > 0) actions.push('<button class="btn primary" type="button" id="sendAutoEncounterCombatBtn">⚔ Envoyer au combat</button>');
+      actions.push('<button class="btn ghost" type="button" id="finishEncounterBtn">✓ Terminer la rencontre</button>');
+    }
+    finalActions.innerHTML = actions.join('');
+    $('returnEncounterCombatBtn')?.addEventListener('click', () => go('combat'));
+    $('avoidEncounterBtn')?.addEventListener('click', () => finishEncounter('Rencontre évitée grâce au contexte.'));
+    $('openEncounterMerchantBtn')?.addEventListener('click', () => {
+      if (state.activeTravel?.status === 'encounter') completeActiveTravelArrival(`Rencontre : ${def.name}. Marchand rencontré.`, 'merchant');
+      else { logEvent(`Rencontre : ${def.name}. Marchand ouvert.`); resetEncounter({render:false}); persist(); go('merchant'); }
     });
+    $('sendAutoEncounterCombatBtn')?.addEventListener('click', sendAutoEncounterToCombat);
+    $('finishEncounterBtn')?.addEventListener('click', () => finishEncounter(`Rencontre terminée : ${def.name}.`));
+  } else {
+    finalCard.hidden = true;
+    finalActions.innerHTML = '';
   }
 }
 
-function sendEncounterToCombat(){
-  const name = $('encName').value.trim();
-  if (!name) return toast('Nom de l’ennemi manquant');
-  const raw = Math.max(1, Number($('encCount').value) || 1);
-  const count = $('travelSolo').checked ? Math.ceil(raw / 2) : raw;
-  const hp = Math.max(1, Number($('encHp').value) || 1);
-  const reward = Math.max(0, Number($('encReward').value) || 0);
-  addEnemyInstances(name, count, hp, reward);
-  logEvent(`Rencontre de trajet : ${count} ${name}${count > 1 ? 's' : ''}.`);
-  persist('Ennemis envoyés au combat');
+async function rollEncounterType(){
+  if (diceRolling) return;
+  const travelId = state.activeTravel?.status === 'encounter' ? state.activeTravel.id : null;
+  resetEncounter({ render:false });
+  state.encounter.travelId = travelId;
+  const rolls = Array.from({ length:7 }, () => secureDie(6));
+  await animateDice({ container:$('encounterTypeDice'), button:$('rollEncounterTypeBtn'), count:7, sides:6, rolls, rollingText:'🎲 Les 7 dés roulent…' });
+  const total = rolls.reduce((a,b) => a+b, 0);
+  state.encounter.typeRolls = rolls;
+  state.encounter.total = total;
+  state.encounter.resultNumber = total;
+  const def = ENCOUNTER_TABLE[total];
+  logEvent(`Jet de rencontre : ${rolls.join(' + ')} = ${total} → ${def.name}. Zone : ${def.zones}.`);
+  persist(null,{render:false});
+  renderEncounter();
+}
+
+function confirmEncounterZone(){
+  if (!encounterDefinition()) return;
+  state.encounter.zoneConfirmed = true;
+  const def = encounterDefinition();
+  if (def.skipQuantity) {
+    state.encounter.quantityRaw = null;
+    state.encounter.quantityBeforeSolo = 1;
+    state.encounter.quantityFinal = 1;
+  }
+  persist(null,{render:false});
+  renderEncounter();
+}
+
+function passEncounterForZone(){
+  const def = encounterDefinition();
+  const message = def ? `Rencontre ignorée : ${def.name} n’est pas accessible dans la zone actuelle.` : 'Rencontre passée.';
+  if (state.activeTravel?.status === 'encounter') {
+    completeActiveTravelArrival(message);
+    return;
+  }
+  logEvent(message);
+  resetEncounter({render:false});
+  persist('Rencontre passée');
+  go('travel');
+}
+
+async function rollEncounterQuantity(){
+  const def = encounterDefinition();
+  if (!def || !state.encounter.zoneConfirmed || def.skipQuantity || diceRolling) return;
+  const raw = secureDie(6);
+  await animateDice({ container:$('encounterQuantityDice'), button:$('rollEncounterQuantityBtn'), count:1, sides:6, rolls:[raw], rollingText:'🎲 Quantité…' });
+  const beforeSolo = raw * (def.quantityMultiplier || 1);
+  const solo = state.activeTravel?.status === 'encounter' ? !!state.activeTravel.solo : !!$('travelSolo')?.checked;
+  const finalQty = solo ? Math.ceil(beforeSolo / 2) : beforeSolo;
+  state.encounter.quantityRaw = raw;
+  state.encounter.quantityBeforeSolo = beforeSolo;
+  state.encounter.quantityFinal = finalQty;
+  persist(null,{render:false});
+  renderEncounter();
+}
+
+async function rollEncounterContext(){
+  const def = encounterDefinition();
+  if (!def || !state.encounter.zoneConfirmed || diceRolling) return;
+  const quantityResolved = def.skipQuantity || Boolean(state.encounter.quantityRaw);
+  if (!quantityResolved) return;
+  const raw = secureDie(6);
+  await animateDice({ container:$('encounterContextDice'), button:$('rollEncounterContextBtn'), count:1, sides:6, rolls:[raw], rollingText:'🎲 Contexte…' });
+  const finalResult = Math.min(6, raw + (def.contextBonus || 0));
+  state.encounter.contextRaw = raw;
+  state.encounter.contextFinal = finalResult;
+  const ctx = ENCOUNTER_CONTEXTS[finalResult];
+  logEvent(`Contexte de ${def.name} : ${ctx.context} — ${ctx.exercise}`);
+  persist(null,{render:false});
+  renderEncounter();
+}
+
+function sendAutoEncounterToCombat(){
+  const def = encounterDefinition();
+  if (!def || def.hp == null || def.hp <= 0) return;
+  const count = def.skipQuantity ? 1 : Math.max(1, Number(state.encounter.quantityFinal) || 1);
+  const ids = addEnemyInstances(def.name, count, def.hp, Math.max(0, Number(def.reward) || 0), { encounterEnemy:true });
+  state.encounter.combatStarted = true;
+  state.encounter.combatEnemyIds = ids;
+  logEvent(`Rencontre de trajet : ${count} ${def.name}${count > 1 ? 's' : ''} envoyé${count > 1 ? 's' : ''} au combat.`);
+  persist('Rencontre envoyée au combat');
   go('combat');
 }
+
+function finishEncounter(message){
+  if (state.activeTravel?.status === 'encounter') {
+    completeActiveTravelArrival(message || 'Rencontre terminée.');
+    return;
+  }
+  if (message) logEvent(message);
+  resetEncounter({render:false});
+  persist('Rencontre terminée');
+  go('travel');
+}
+
+function addEnemyInstances(name, count, hp, reward, meta = {}){
+  const ids = [];
+  for (let i = 1; i <= count; i += 1) {
+    const id = uid();
+    ids.push(id);
+    state.combat.enemies.push({
+      id, name: count > 1 ? `${name} ${i}` : name,
+      maxHp: hp, hp, reward, defeated: false, rewarded: false, ...meta
+    });
+  }
+  return ids;
+}
+
 
 function addEnemyManual(){
   const name = $('enemyName').value.trim();
@@ -931,15 +1338,19 @@ function bindEvents(){
   document.addEventListener('click', handleDelegatedClick);
   document.addEventListener('change', handleDelegatedChange);
   $('installAppBtn')?.addEventListener('click', installApp);
+  $('editHomePositionBtn')?.addEventListener('click', editCurrentLocation);
+  $('editTravelPositionBtn')?.addEventListener('click', editCurrentLocation);
 
   ['charName','charClass','charLevel','charPath','charQuest','charSpecial'].forEach((id) => $(id).addEventListener('input', saveCharacterFromInputs));
   $('adjustPoBtn').addEventListener('click', () => openNumberModal({ title:'Ajuster la bourse', label:'Ajouter ou retirer des poids d’or (ex. 50 ou -20)', value:0, confirmText:'Modifier', onConfirm:(delta) => { state.po = Math.max(0, state.po + delta); logEvent(`${delta >= 0 ? '+' : ''}${delta} PO. Solde : ${state.po} PO.`); persist('PO mis à jour'); } }));
   $('addEquipmentBtn').addEventListener('click', addEquipment);
   $('saveTravelBtn').addEventListener('click', saveTravel);
-  $('rollDiceBtn').addEventListener('click', rollDice);
-  $('encounterType').addEventListener('change', renderEncounterFields);
-  $('travelSolo').addEventListener('change', updateSoloCount);
   $('travelDistance').addEventListener('input', updateTravelCalculation);
+  $('travelScoutBonus').addEventListener('change', updateTravelCalculation);
+  $('rollEncounterTypeBtn').addEventListener('click', rollEncounterType);
+  $('rollEncounterQuantityBtn').addEventListener('click', rollEncounterQuantity);
+  $('rollEncounterContextBtn').addEventListener('click', rollEncounterContext);
+  $('resetEncounterBtn').addEventListener('click', () => resetEncounter());
   $('addEnemyBtn').addEventListener('click', addEnemyManual);
   $('damageWeapon').addEventListener('change', updateDamagePreview);
   $('effortSeconds').addEventListener('input', updateDamagePreview);

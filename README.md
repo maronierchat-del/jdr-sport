@@ -63,3 +63,40 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 - Icônes 192 px et 512 px.
 - Bouton d’installation sur l’accueil.
 - Service worker sans cache : les mises à jour GitHub Pages ne restent pas bloquées sur une ancienne version.
+
+
+## V3.9 — Dés animés
+
+- Le lancer de dés affiche maintenant une animation de roulis avec valeurs qui défilent.
+- Les dés se figent successivement sur les résultats réellement tirés.
+- Le bouton est verrouillé pendant l’animation pour éviter les doubles lancers.
+- Respect du réglage système « réduire les animations ».
+
+
+## V4.0 — rencontres automatiques
+
+- Le trajet calcule le nombre de rencontres à lancer (1 tous les 6 km).
+- Un bouton ouvre une page Rencontre dédiée.
+- Étape 1 : 7D6 animés, somme automatique et lecture de la table des rencontres (7 à 42).
+- La zone autorisée, les PV, la récompense et l’effet immédiat sont affichés automatiquement.
+- La rencontre peut être passée si la zone ne correspond pas.
+- Étape 2 : quantité sur 1D6, avec multiplicateur spécial et règle solo appliqués automatiquement ; les rencontres sans dé de quantité sautent l’étape.
+- Étape 3 : contexte sur 1D6 avec exercice/malus affiché automatiquement.
+- Envoi direct au combat ou au marchand selon le résultat.
+
+
+## V4.2 — position et progression de campagne
+
+- L’application mémorise la position actuelle d’Eleanore (migration par défaut : Plaine du Fitland).
+- Un trajet enregistré devient un état de campagne persistant : départ → destination → effort IRL → rencontre → arrivée.
+- Tant que l’effort IRL n’est pas validé, Eleanore reste au point de départ.
+- Valider l’effort ouvre automatiquement la rencontre quand le trajet fait au moins 6 km ; en dessous de 6 km, l’arrivée est enregistrée sans rencontre.
+- Une rencontre envoyée au combat bloque l’arrivée jusqu’à la résolution du combat correspondant.
+- Une fois la rencontre terminée, la position actuelle passe automatiquement à la destination.
+- À l’arrivée, la zone peut être validée directement ; la même case est alors cochée dans la page Zones. Les zones restreintes restent soumises à leur accès.
+- La position peut être modifiée manuellement avec l’icône ✎ lorsqu’aucun trajet n’est en cours.
+
+
+## V4.2
+- Option de trajet « Bonus d’éclaireur » : divise le temps à faire par 2 sans changer la distance ni le nombre de rencontres.
+- Le trajet mémorise si le bonus a été utilisé.
