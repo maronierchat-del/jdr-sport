@@ -1,4 +1,4 @@
-const SW_VERSION = 'fitland-pwa-v3.8';
+const SW_VERSION = 'fitland-pwa-v4.3';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting());

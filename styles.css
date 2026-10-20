@@ -206,15 +206,16 @@ p{margin-bottom:0}
 .travel-check{margin:2px 0 4px}.last-travel{font-size:.76rem;color:#6f6656;margin-top:9px;text-align:center}
 .dice-card{overflow:hidden}.die-symbol{font-size:2.2rem;color:#806b3d;transform:rotate(8deg)}
 .dice-btn{margin-top:12px;background:linear-gradient(180deg,#785f31,#60491f);color:#fff7e6;box-shadow:0 8px 18px rgba(96,73,31,.20)}
-.dice-results{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:15px;min-height:58px}
-.die{width:58px;height:58px;border-radius:15px;background:#fffaf0;border:2px solid #7a6334;display:grid;place-items:center;font-family:Georgia,serif;font-size:1.55rem;font-weight:900;color:#332818;box-shadow:0 7px 15px rgba(64,47,21,.14);animation:diePop .32s ease;transform-origin:center}
-.die.rolling{animation:dieRoll .34s cubic-bezier(.36,.07,.19,.97) infinite;animation-delay:var(--die-delay,0ms);box-shadow:0 11px 20px rgba(64,47,21,.2)}
-.die.landed{animation:dieLand .28s cubic-bezier(.2,.9,.3,1.35)}
+.dice-results{display:flex;gap:13px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:18px;min-height:66px;padding:4px 0 8px;perspective:700px}
+.die-3d{--die-size:58px;--die-half:29px;width:var(--die-size);height:var(--die-size);position:relative;perspective:430px;transform-origin:center;filter:drop-shadow(0 8px 7px rgba(64,47,21,.22));animation:diePop .28s ease both}
+.die-cube{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:center;will-change:transform}
+.die-face{position:absolute;inset:0;display:grid;place-items:center;border:2px solid #6f592e;border-radius:10px;background:linear-gradient(145deg,#fffdf7 0%,#f0e3c5 100%);color:#2e2416;font-family:Georgia,serif;font-size:1.72rem;font-weight:900;line-height:1;backface-visibility:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.38),inset -5px -7px 10px rgba(116,91,43,.12)}
+.die-front{transform:translateZ(var(--die-half))}.die-back{transform:rotateY(180deg) translateZ(var(--die-half))}.die-right{transform:rotateY(90deg) translateZ(var(--die-half))}.die-left{transform:rotateY(-90deg) translateZ(var(--die-half))}.die-top{transform:rotateX(90deg) translateZ(var(--die-half))}.die-bottom{transform:rotateX(-90deg) translateZ(var(--die-half))}
+.die-3d.rolling{filter:drop-shadow(0 13px 9px rgba(64,47,21,.28))}.die-3d.landed{animation:dieLand .26s cubic-bezier(.2,.9,.3,1.25)}
 .dice-btn.is-rolling{cursor:wait;opacity:.82}
-@keyframes diePop{0%{transform:scale(.3) rotate(-25deg);opacity:0}70%{transform:scale(1.08) rotate(4deg)}100%{transform:scale(1);opacity:1}}
-@keyframes dieRoll{0%{transform:translate(0,0) rotate(0deg) scale(1)}20%{transform:translate(-6px,-8px) rotate(-20deg) scale(.96)}45%{transform:translate(7px,-3px) rotate(18deg) scale(1.05)}70%{transform:translate(-4px,5px) rotate(-12deg) scale(.98)}100%{transform:translate(0,0) rotate(0deg) scale(1)}}
-@keyframes dieLand{0%{transform:translateY(-8px) rotate(8deg) scale(1.08)}55%{transform:translateY(3px) rotate(-3deg) scale(.96)}100%{transform:translateY(0) rotate(0) scale(1)}}
-@media (prefers-reduced-motion:reduce){.die,.die.rolling,.die.landed{animation:none!important}}
+@keyframes diePop{0%{transform:scale(.55);opacity:0}75%{transform:scale(1.05);opacity:1}100%{transform:scale(1)}}
+@keyframes dieLand{0%{transform:translateY(-5px) scale(1.05)}55%{transform:translateY(2px) scale(.97)}100%{transform:translateY(0) scale(1)}}
+@media (prefers-reduced-motion:reduce){.die-3d,.die-3d.rolling,.die-3d.landed{animation:none!important}}
 .dice-total{text-align:center;color:#6f624a;font-weight:900;margin-top:8px}.encounter-fields{margin-top:13px;padding-top:13px;border-top:1px solid var(--line)}
 .chip-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.chip-btn{border:1px solid rgba(72,99,74,.22);background:#dfe8db;color:#38523b;border-radius:999px;padding:8px 11px;font-size:.74rem;font-weight:900}
 .enemy-card{position:relative;overflow:hidden}.enemy-card.defeated{opacity:.62;filter:saturate(.65)}
@@ -332,7 +333,7 @@ p{margin-bottom:0}
 @media(max-width:600px){
   .travel-calc{grid-template-columns:1fr 1fr}.travel-calc>div:last-child{grid-column:1/-1}
   .encounter-meta{grid-template-columns:1fr 1fr}.encounter-meta .zone-meta{grid-column:1/-1}
-  .encounter-dice .die{width:46px;height:46px;border-radius:12px;font-size:1.25rem}
+  .encounter-dice .die-3d{--die-size:46px;--die-half:23px}.encounter-dice .die-face{border-radius:8px;font-size:1.42rem}
 }
 
 /* V4.1 — progression de campagne et position */

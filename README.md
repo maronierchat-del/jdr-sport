@@ -100,3 +100,11 @@ L'application est statique : il suffit de publier la branche `main`, dossier `/ 
 ## V4.2
 - Option de trajet « Bonus d’éclaireur » : divise le temps à faire par 2 sans changer la distance ni le nombre de rencontres.
 - Le trajet mémorise si le bonus a été utilisé.
+
+## V4.3 — vrais dés 3D
+
+- Les lancers utilisent désormais de vrais dés cubiques en 3D.
+- Chaque face affiche un chiffre de 1 à 6 au lieu de points.
+- Les dés roulent et tournent réellement avant de s'arrêter sur le résultat tiré.
+- Les 7D6 de rencontre restent visibles comme sept dés distincts.
+

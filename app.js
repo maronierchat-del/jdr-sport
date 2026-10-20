@@ -789,6 +789,32 @@ function sleep(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function dieTransform(value){
+  const transforms = {
+    1: 'rotateX(0deg) rotateY(0deg)',
+    2: 'rotateX(-90deg) rotateY(0deg)',
+    3: 'rotateX(0deg) rotateY(-90deg)',
+    4: 'rotateX(0deg) rotateY(90deg)',
+    5: 'rotateX(90deg) rotateY(0deg)',
+    6: 'rotateX(0deg) rotateY(180deg)'
+  };
+  return transforms[Number(value)] || transforms[1];
+}
+
+function dieMarkup(value, extraClass = ''){
+  const n = Math.max(1, Math.min(6, Number(value) || 1));
+  return `<div class="die-3d ${extraClass}" data-value="${n}" role="img" aria-label="Dé : ${n}">
+    <div class="die-cube" style="transform:${dieTransform(n)}">
+      <span class="die-face die-front">1</span>
+      <span class="die-face die-back">6</span>
+      <span class="die-face die-right">3</span>
+      <span class="die-face die-left">4</span>
+      <span class="die-face die-top">2</span>
+      <span class="die-face die-bottom">5</span>
+    </div>
+  </div>`;
+}
+
 async function animateDice({ container, button, count, sides = 6, rolls, rollingText = '🎲 Ça roule…' }){
   if (diceRolling) return false;
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -800,24 +826,50 @@ async function animateDice({ container, button, count, sides = 6, rolls, rolling
     button.textContent = rollingText;
   }
   container.setAttribute('aria-busy', 'true');
+
   if (reduceMotion) {
-    container.innerHTML = rolls.map((roll) => `<div class="die">${roll}</div>`).join('');
+    container.innerHTML = rolls.map((roll) => dieMarkup(roll, 'landed')).join('');
   } else {
-    container.innerHTML = Array.from({ length: count }, (_, index) => `<div class="die rolling" style="--die-delay:${index * 45}ms">${secureDie(sides)}</div>`).join('');
-    const dice = Array.from(container.querySelectorAll('.die'));
-    const ticker = setInterval(() => {
-      dice.forEach((die) => { if (die.classList.contains('rolling')) die.textContent = secureDie(sides); });
-    }, 70);
-    await sleep(480);
-    for (let index = 0; index < dice.length; index += 1) {
-      const die = dice[index];
-      die.textContent = rolls[index];
+    container.innerHTML = Array.from({ length: count }, () => dieMarkup(secureDie(sides), 'rolling')).join('');
+    const dice = Array.from(container.querySelectorAll('.die-3d'));
+
+    await Promise.all(dice.map(async (die, index) => {
+      const cube = die.querySelector('.die-cube');
+      const finalValue = rolls[index];
+      const finalTransform = dieTransform(finalValue);
+      const duration = 720 + index * 65;
+      const spinX = 720 + secureDie(6) * 90;
+      const spinY = 900 + secureDie(6) * 90;
+      const spinZ = (secureDie(6) - 3) * 35;
+
+      const bounce = die.animate?.([
+        { transform:'translateY(0) scale(1)' },
+        { transform:'translateY(-14px) scale(1.04)', offset:.24 },
+        { transform:'translateY(3px) scale(.98)', offset:.72 },
+        { transform:'translateY(0) scale(1)' }
+      ], { duration, easing:'cubic-bezier(.22,.75,.25,1)' });
+
+      if (cube?.animate) {
+        const tumble = cube.animate([
+          { transform:'rotateX(0deg) rotateY(0deg) rotateZ(0deg)' },
+          { transform:`rotateX(${Math.round(spinX * .38)}deg) rotateY(${Math.round(spinY * .42)}deg) rotateZ(${Math.round(spinZ * .5)}deg)`, offset:.38 },
+          { transform:`rotateX(${Math.round(spinX * .78)}deg) rotateY(${Math.round(spinY * .82)}deg) rotateZ(${spinZ}deg)`, offset:.78 },
+          { transform:finalTransform }
+        ], { duration, easing:'cubic-bezier(.18,.72,.22,1)', fill:'forwards' });
+        await tumble.finished.catch(() => {});
+      } else {
+        await sleep(duration);
+      }
+      if (bounce?.finished) await bounce.finished.catch(() => {});
+
+      cube.style.transform = finalTransform;
+      die.dataset.value = finalValue;
+      die.setAttribute('aria-label', `Dé : ${finalValue}`);
       die.classList.remove('rolling');
       die.classList.add('landed');
-      await sleep(count > 2 ? 70 : 110);
-    }
-    clearInterval(ticker);
+    }));
   }
+
   container.removeAttribute('aria-busy');
   if (button) {
     button.disabled = false;
@@ -848,7 +900,7 @@ function renderEncounter(){
   const context = $('encounterTravelContext');
   if (context) context.innerHTML = trip?.status === 'encounter' ? `<div class="section-kicker">Trajet en cours</div><strong>${esc(trip.from)} → ${esc(trip.to)}</strong><p class="helper">L’effort IRL est validé. L’arrivée sera enregistrée quand cette rencontre sera terminée.</p>` : '';
 
-  typeDice.innerHTML = e.typeRolls?.length ? e.typeRolls.map((roll) => `<div class="die">${roll}</div>`).join('') : '';
+  typeDice.innerHTML = e.typeRolls?.length ? e.typeRolls.map((roll) => dieMarkup(roll)).join('') : '';
   $('encounterTypeTotal').textContent = e.total ? `Total : ${e.total}` : '';
 
   const resultSlot = $('encounterResultCard');
@@ -875,7 +927,7 @@ function renderEncounter(){
   const quantityStep = $('encounterStepQuantity');
   const quantityDice = $('encounterQuantityDice');
   const quantityResult = $('encounterQuantityResult');
-  quantityDice.innerHTML = e.quantityRaw ? `<div class="die">${e.quantityRaw}</div>` : '';
+  quantityDice.innerHTML = e.quantityRaw ? dieMarkup(e.quantityRaw) : '';
 
   const readyForQuantity = Boolean(def && e.zoneConfirmed);
   quantityStep.classList.toggle('locked-step', !readyForQuantity);
@@ -905,7 +957,7 @@ function renderEncounter(){
   contextStep.classList.toggle('locked-step', !quantityResolved);
   contextButton.disabled = !quantityResolved;
   $('contextHelper').textContent = quantityResolved ? (def.contextBonus ? `Lance 1D6. ${def.name} ajoute +${def.contextBonus} au résultat (maximum 6 pour cette table).` : 'Lance 1D6 pour établir le contexte de la rencontre.') : 'Détermine d’abord la quantité.';
-  $('encounterContextDice').innerHTML = e.contextRaw ? `<div class="die">${e.contextRaw}</div>` : '';
+  $('encounterContextDice').innerHTML = e.contextRaw ? dieMarkup(e.contextRaw) : '';
   if (e.contextFinal) {
     const ctx = ENCOUNTER_CONTEXTS[e.contextFinal];
     const bonusText = def.contextBonus ? `<span>Dé ${e.contextRaw} + ${def.contextBonus} → résultat ${e.contextFinal}</span>` : '';
